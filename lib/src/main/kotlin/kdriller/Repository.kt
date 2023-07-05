@@ -153,10 +153,47 @@ class Repository(
         _cleanup = if (cloneRepoTo != null) false else true
     }
 
+    // Static methods
+    companion object {
+        fun _isRemote(repo: String): Boolean {
+            return arrayOf("git@", "https://", "http://").any { repo.startsWith(it) }
+        }
 
-    private fun isRemote(repo: String): Boolean {
-        return arrayOf("git@", "https://", "http://").any { repo.startsWith(it) }
+        /**
+         * Given the list of commits return chunks of commits based on the number of workers.
+         *
+         * @param[fullList] full list of commits
+         * @param[numWorkers] number of workers (i.e., threads)
+         * @return Chunks of commits
+         */
+        @JvmStatic
+        fun _splitInChunks(fullList: List<Commit>, numWorkers: Int): List<List<Commit>>{
+            val numChunks = ceil((fullList.size / numWorkers).toDouble()).toInt()
+            val chunks = mutableListOf<List<Commit>>()
+            for (i in 0..fullList.size step numChunks){
+                chunks.add(fullList.slice(i until i + numChunks))
+            }
+            return chunks
+        }
+
+        @JvmStatic
+        fun _getRepoNameFromURL(url: String): String {
+            val lastSlashIndex = url.lastIndexOf('/')
+            val lenURL = url.length
+            if (lastSlashIndex < 0 || lastSlashIndex >= lenURL - 1) {
+                throw MalformedUrl("Badly formatted url $url")
+            }
+            val lastDotIndex = url.lastIndexOf('.')
+            val lastSuffixIndex = if (url.subSequence(lastDotIndex, lenURL) == ".git") {
+                lastDotIndex
+            } else {
+                lenURL
+            }
+
+            return url.subSequence(lastSlashIndex + 1, lastSuffixIndex).toString()
+        }
     }
+
 
     private fun _cloneRemoteRepo(tmpFolder: String, repo: String): String {
         val repoFolder = FilenameUtils.concat(tmpFolder, _getRepoNameFromURL(repo))
@@ -181,7 +218,7 @@ class Repository(
             }
             cloneFolder = cloneFolderPath.toString()
         } else {
-            // Save the temporary directory so we can clean it up later
+            // Save the temporary directory, so we can clean it up later
             _tmpDir = createTempDirectory().toFile()
             cloneFolder = _tmpDir.path
         }
@@ -191,7 +228,7 @@ class Repository(
 
     private fun _prepRepo(pathRepo: String) = sequence<Git> {
         var localPathRepo = pathRepo
-        if (isRemote(pathRepo)) {
+        if (_isRemote(pathRepo)) {
             localPathRepo = _cloneRemoteRepo(_cloneFolder(), pathRepo)
         }
         localPathRepo = Path(localPathRepo).toString()
@@ -206,7 +243,7 @@ class Repository(
         _conf.setValue("git", git)
 
         // checking that the filters are set correctly
-        //_conf.sanityCheckFilters()
+        _conf.sanityCheckFilters()
 
         yield(git!!)
 
@@ -217,7 +254,7 @@ class Repository(
 
 
         // delete the temporary directory if created
-        if (isRemote(pathRepo) && _cleanup) {
+        if (_isRemote(pathRepo) && _cleanup) {
             assert(_tmpDir != null)
             _tmpDir.deleteRecursively()
         }
@@ -285,43 +322,7 @@ class Repository(
 
     }
 
-    companion object {
 
-        /**
-         * Given the list of commits return chunks of commits based on the number of workers.
-         *
-         * @param[fullList] full list of commits
-         * @param[numWorkers] number of workers (i.e., threads)
-         * @return Chunks of commits
-         */
-        @JvmStatic
-        fun _splitInChunks(fullList: List<Commit>, numWorkers: Int): List<List<Commit>>{
-            val numChunks = ceil((fullList.size / numWorkers).toDouble()).toInt()
-            val chunks = mutableListOf<List<Commit>>()
-            for (i in 0..fullList.size step numChunks){
-                chunks.add(fullList.slice(i until i + numChunks))
-            }
-            return chunks
-        }
-
-        @JvmStatic
-        fun _getRepoNameFromURL(url: String): String {
-            val lastSlashIndex = url.lastIndexOf('/')
-            val lenURL = url.length
-            if (lastSlashIndex < 0 || lastSlashIndex >= lenURL - 1) {
-                throw MalformedUrl("Badly formatted url $url")
-            }
-            val lastDotIndex = url.lastIndexOf('.')
-            val lastSuffixIndex = if (url.subSequence(lastDotIndex, lenURL) == ".git") {
-                lastDotIndex
-            } else {
-                lenURL
-            }
-
-            return url.subSequence(lastSlashIndex + 1, lastSuffixIndex).toString()
-        }
-
-    }
 
 }
 

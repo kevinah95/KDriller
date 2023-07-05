@@ -17,12 +17,18 @@
 
 package kdriller
 
+/**
+ * This module includes 1 class, Git, representing a repository in Git.
+ */
+
 import kdriller.domain.Commit
 import kdriller.utils.Conf
 import mu.KotlinLogging
-import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import java.io.Closeable
@@ -30,21 +36,31 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.name
 
+
 private val logger = KotlinLogging.logger {}
 
-@Suppress("FunctionName")
+/**
+ * Class representing a repository in Git. It contains most of the logic of
+ * PyDriller: obtaining the list of commits, checkout, reset, etc.
+ *
+ * @constructor Init the Git Repository.
+ *
+ * @param [path] path to the repository
+ * @property [repo] JGit object Repository
+ */
+@Suppress("FunctionName", "MemberVisibilityCanBePrivate")
 class Git(path: String, var conf: Conf? = null) : Closeable {
 
     var path: Path
-    var projectName: String
+    val projectName: String
     private var _repo: Repository? = null
-    private var _conf: Conf? = null
+    private val _conf: Conf
 
     init {
         this.path = Path(path)
         projectName = this.path.name
 
-        // if no configuration is passed, then creates a new "emtpy" one
+        // if no configuration is passed, then creates a new "empty" one
         // with just "path_to_repo" inside.
         if (conf == null) {
             conf = Conf(
@@ -55,9 +71,13 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
             )
         }
 
-        _conf = conf
-        _conf?.setValue("main_branch", null)
+        _conf = conf!!
+        _conf.setValue("main_branch", null) // init main_branch to None
+
+        // Initialize repository
+        _openRepository()
     }
+
 
     var repo: Repository? = null
         get() {
@@ -80,7 +100,7 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
             .findGitDir()
             .build()
 
-        if (_conf?.get("main_branch") == null) {
+        if (_conf.get("main_branch") == null) {
             _discoverMainBranch(_repo)
         }
 
@@ -88,82 +108,166 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
 
     private fun _discoverMainBranch(repo: Repository?) {
         try {
-            _conf?.setValue("main_branch", repo?.branch)
+            _conf.setValue("main_branch", repo?.branch)
         } catch (e: Exception) {
             // The current HEAD is detached. In this case, it doesn't belong to
             // any branch, hence we return an empty string
             logger.info("HEAD is a detached symbolic reference, setting main branch to empty string")
-            _conf?.setValue("main_branch", "")
+            _conf.setValue("main_branch", "")
         }
     }
 
+    /**
+     * Get the head commit.
+     *
+     * @return [Commit] of the head commit
+     */
     fun getHead(): Commit {
-        val headId: ObjectId = repo?.resolve("HEAD")!!
+        val headId: ObjectId = repo?.resolve(Constants.HEAD)!!
 
         RevWalk(repo).use { walk ->
             val headCommit = walk.parseCommit(headId)
-            return Commit(headCommit)
+            return Commit(headCommit, _conf)
         }
     }
 
-    fun getListCommits(rev: String = "HEAD") = sequence<Commit> {
-        repo.use {
-            val revId: ObjectId = it?.exactRef(rev)?.objectId!!
-            RevWalk(it).use { walk ->
-                val commit = walk.parseCommit(revId)
-                walk.markStart(commit)
-                for (revCommit in walk) {
-                    yield(getCommitFromJGit(revCommit))
-                }
-                walk.dispose()
+    /**
+     * Return a generator of commits of all the commits in the repo.
+     *
+     * @return the generator of all the commits in the repo
+     */
+    fun getListCommits(rev: String = Constants.HEAD) = sequence<Commit> {
+        var revSort = RevSort.NONE
+        if (_conf.get("reverse") != null) {
+            revSort = RevSort.REVERSE
+        }
+
+        val revId: ObjectId = repo?.exactRef(rev)?.objectId!!
+        RevWalk(repo).use { walk ->
+            val commit = walk.parseCommit(revId)
+            walk.markStart(commit)
+            walk.sort(revSort, true) // We can extend multiple sorts
+            for (revCommit in walk) {
+                yield(getCommitFromJGit(revCommit))
             }
+            walk.dispose()
         }
     }
 
+    /**
+     * Get the specified commit.
+     *
+     * @param [commitId] hash of the commit to analyze
+     * @return [Commit]
+     */
     fun getCommit(commitId: String): Commit {
         RevWalk(repo).use { walk ->
             val commit = walk.parseCommit(repo?.resolve(commitId))
-            return Commit(commit)
+            return Commit(commit, _conf)
         }
     }
 
+    /**
+     * Build a KDriller commit object from a JGit commit object.
+     * This is internal of KDriller, I don't think users generally will need it.
+     *
+     * @param [commit] JGit commit
+     * @return [Commit] KDriller commit
+     */
     fun getCommitFromJGit(commit: RevCommit): Commit {
-        return Commit(commit)
+        return Commit(commit, _conf)
     }
 
     // TODO: checkout. Note: I don't know if it is possible with repo
 
+    /**
+     * Obtain the list of the files (excluding .git directory).
+     *
+     * @return the list of the files
+     */
     fun files(): List<String> {
         return path.toFile()
             .walkTopDown()
-            .filter { !(it.isDirectory && it.name == ".git") }
+            .filter { !it.path.toString().contains(".git") }
             .map { it.absolutePath.toString() }
             .toList()
     }
 
+    // TODO: reset
+
+    /**
+     * Calculate total number of commits.
+     *
+     * @return the total number of commits
+     */
+    fun totalCommits(): Int {
+        return getListCommits().count()
+    }
+
+
+    /**
+     * Obtain the tagged commit.
+     *
+     * @param [tag] the tag
+     * @return [Commit] the commit the tag referred to
+     */
     fun getCommitFromTag(tag: String): Commit {
         RevWalk(repo).use { walk ->
             val commit = walk.parseCommit(repo?.resolve(tag))
-            return Commit(commit)
+            return Commit(commit, _conf)
         }
     }
 
 
+    /**
+     * Obtain the hash of all the tagged commits.
+     *
+     * @return list of tagged commits (can be empty if there are no tags)
+     */
+    fun getTaggedCommits(): List<String> {
+        val tags = mutableListOf<String>()
 
-    // TODO: get_tagged_commits
-    fun getTaggedCommits(): List<String>{
-        throw NotImplementedError()
+        Git(repo).use { git ->
+            val call = git.tagList().call()
+            for (ref in call) {
+                val peeledRef: Ref? = repo?.refDatabase?.peel(ref)
+                if (peeledRef?.peeledObjectId != null) {
+                    tags.add(peeledRef.peeledObjectId!!.name)
+                } else {
+                    tags.add(ref.objectId.name)
+                }
+            }
+        }
+
+        return tags
     }
 
     // TODO: get_commits_last_modified_lines
 
 
-    fun getCommitsModifiedFile(filepath: String, includeDeletedFiles: Boolean){
-        throw NotImplementedError()
+    // TODO: implement includeDeletedFiles
+    /**
+     * Given a filepath, returns all the commits that modified this file (following renames).
+     *
+     * @param [filepath] path to the file
+     * @param [includeDeletedFiles] if true, include commits that modifies a deleted file
+     * @return the list of commits' hash
+     */
+    fun getCommitsModifiedFile(filepath: String, includeDeletedFiles: Boolean): List<String> {
+        val path = Path(filepath).toString()
+        val commits = mutableListOf<String>()
+
+        Git(repo).use { git ->
+            val logs = git.log().addPath(path).call()
+            for (rev in logs) {
+                commits.add(rev.name)
+            }
+        }
+        return commits
     }
 
     // TODO: not implemented yet
-    fun clear(){
+    fun clear() {
         if (_repo != null) {
             repo
         }

@@ -21,17 +21,26 @@ import org.apache.commons.io.FileUtils
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import java.io.File
 import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 
 
-val testFolder = FileUtils.getFile("src", "test", "resources", "test-repos")
+
 
 internal class TestRepository {
+    private val testFolder: File = FileUtils.getFile("src", "test", "resources", "test-repos")
 
     @Test
     // It should fail when URL is not a string or a List
     fun testBadlyFormattedRepoUrl() {
+        assertFails {
+            Repository(listOf("repo")).traverseCommits().toList()
+        }
+    }
+    @Test
+    // It should fail when URL is not a string or a List
+    fun testMalformedUrl() {
         assertFailsWith(MalformedUrl::class) {
             Repository(listOf("https://badurl.git/")).traverseCommits().toList()
         }
