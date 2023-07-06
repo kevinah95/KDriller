@@ -24,15 +24,12 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.ObjectLoader
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.revwalk.RevTree
 import org.eclipse.jgit.revwalk.RevWalk
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.AbstractTreeIterator
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.EmptyTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -49,7 +46,7 @@ import kotlin.io.path.name
  * @param [commit] JGit Commit object
  * @param [conf] Configuration class
  */
-@Suppress("MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate", "FunctionName")
 data class Commit(val commit: RevCommit, private val conf: Conf) {
     val cObject = commit
 
@@ -205,37 +202,50 @@ data class Commit(val commit: RevCommit, private val conf: Conf) {
     val lines: Int
         get() = insertions + deletions
 
-    // TODO: Implement shortstat
+    // TODO: implement files
 
-    // TODO: modified_files
     val modifiedFiles: List<ModifiedFile>
         get() {
-            if (conf.get("histogram") as Boolean) {
-                val diffAlgorithm = HistogramDiff()
-            } else {
-                val diffAlgorithm = MyersDiff.INSTANCE
+            var diffIndex: List<DiffEntry>?
+            Git.open(Path(projectPath).resolve(".git").toFile()).use { git ->
+                RevWalk(git.repository).use { walk ->
+                    if (parents.size == 1){
+                        // the commit has a parent
+                        val parentCommit = commit.getParent(0).name // TODO: oldTreeIterator
+                        val parentCommitRev = walk.parseCommit(ObjectId.fromString(parentCommit))
+                        val oldTreeIterator = getCanonicalTreeParser(parentCommitRev)
+                        val newTreeIterator = getCanonicalTreeParser(cObject)
+                        diffIndex = getDiffEntries(oldTreeIterator!!, newTreeIterator!!)
+                    } else if (parents.size > 1){
+                        diffIndex = listOf()
+                    } else {
+                        // this is the first commit of the repo. Comparing it with git NULL TREE
+                        val oldTreeIterator = EmptyTreeIterator() // NULL_TREE
+                        val newTreeIterator = getCanonicalTreeParser(cObject)
+                        diffIndex = getDiffEntries(oldTreeIterator, newTreeIterator!!)
+                    }
+                }
             }
 
-            if (conf.get("skip_whitespaces") as Boolean) {
-                val rawTextComparator = RawTextComparator.WS_IGNORE_ALL
-            } else {
-                val rawTextComparator = RawTextComparator.DEFAULT
-            }
+            return _parseDiff(diffIndex)
+        }
 
-            if (parents.size == 1) {
-                // the commit has a parent
-                val parentCommit = commit.getParent(0).name // TODO: oldTreeIterator
-                val currentCommit = commit.name // TODO: newTreeIterator
-                // diffIndex
-            } else if (parents.size > 1) {
-                val diffIndex = listOf<String>()
-            } else {
-                // Compare with NULL_TREE
-                // oldTreeIterator = EmptyTreeIterator()
-            }
+    fun _parseDiff(diffIndex: List<DiffEntry>?): List<ModifiedFile> {
+        val modifiedFilesList = mutableListOf<ModifiedFile>()
+        var parent: String? = null
+        if (cObject.parents.size != 0){
+            parent = commit.getParent(0).name
+        }
+        for (diff in diffIndex!!){
+            modifiedFilesList.add(ModifiedFile(diff, projectPath, cObject.tree, parent))
+        }
 
-
-            return listOf()
+        return modifiedFilesList
+    }
+    val inMainBranch: Boolean
+        get() {
+            val mainBranch = conf.get("main_branch") as String
+            return mainBranch in branches
         }
 
     val branches: Set<String>
@@ -250,24 +260,27 @@ data class Commit(val commit: RevCommit, private val conf: Conf) {
             }
             return branches
         }
-    val inMainBranch: Boolean
-        get() {
-            val mainBranch = conf.get("main_branch") as String
-            return mainBranch in branches
-        }
 
 
-    val diffEntries: MutableList<DiffEntry>?
+    val diffEntries: List<DiffEntry>?
         get() {
             Git.open(Path(projectPath).resolve(".git").toFile()).use { git ->
                 RevWalk(git.repository).use { walk ->
-                    val parentCommit: RevCommit? =
-                        if (commit.parentCount > 0) walk.parseCommit(ObjectId.fromString(commit.getParent(0).name)) else null
+                    if (parents.size == 1){
+                        // the commit has a parent
+                        val parentCommit = commit.getParent(0).name // TODO: oldTreeIterator
+                        val parentCommitRev = walk.parseCommit(ObjectId.fromString(parentCommit))
+                        val oldTreeIterator = getCanonicalTreeParser(parentCommitRev)
+                        val newTreeIterator = getCanonicalTreeParser(cObject)
+                        return getDiffEntries(oldTreeIterator!!, newTreeIterator!!)
+                    } else if (parents.size > 1){
+                        return listOf<DiffEntry>()
+                    } else {
+                        val oldTreeIterator = EmptyTreeIterator()
+                        val newTreeIterator = getCanonicalTreeParser(cObject)
+                        return getDiffEntries(oldTreeIterator, newTreeIterator!!)
+                    }
 
-                    val oldTreeIterator =
-                        if (parentCommit != null) getCanonicalTreeParser(parentCommit) else EmptyTreeIterator()
-                    val newTreeIterator = getCanonicalTreeParser(cObject)
-                    return getDiffEntries(oldTreeIterator!!, newTreeIterator!!)
                 }
             }
         }
@@ -277,14 +290,25 @@ data class Commit(val commit: RevCommit, private val conf: Conf) {
         oldTreeIterator: AbstractTreeIterator,
         newTreeIterator: AbstractTreeIterator
     ): MutableList<DiffEntry>? {
+        val diffAlgorithm = if (conf.get("histogram")!= null && conf.get("histogram") as Boolean) {
+            HistogramDiff()
+        } else {
+            MyersDiff.INSTANCE
+        }
+
+        val rawTextComparator = if (conf.get("skip_whitespaces")!= null && conf.get("skip_whitespaces") as Boolean) {
+            RawTextComparator.WS_IGNORE_ALL
+        } else {
+            RawTextComparator.DEFAULT
+        }
+
         Git.open(Path(projectPath).resolve(".git").toFile()).use { git ->
             DiffFormatter(DisabledOutputStream.INSTANCE).use { diffFormatter ->
                 diffFormatter.setRepository(git.repository)
-                // TODO: diffFormatter.setDiffAlgorithm()
-                // TODO: diffFormatter.setDiffComparator(RawTextComparator.WS_IGNORE_ALL)
+                diffFormatter.setDiffAlgorithm(diffAlgorithm)
+                diffFormatter.setDiffComparator(rawTextComparator)
                 diffFormatter.isDetectRenames = true
-                val diffEntries = diffFormatter.scan(oldTreeIterator, newTreeIterator)
-                return diffEntries
+                return diffFormatter.scan(oldTreeIterator, newTreeIterator)
 
             }
         }
@@ -301,46 +325,6 @@ data class Commit(val commit: RevCommit, private val conf: Conf) {
                 }
             }
         }
-    }
-
-    @Throws(IOException::class)
-    private fun analyzeDiff(diff: DiffEntry): String {
-
-        val output = ByteArrayOutputStream()
-        val df = DiffFormatter(output)
-        val builder = FileRepositoryBuilder()
-        val repository = builder.setGitDir(Path(projectPath).resolve(".git").toFile())
-            .readEnvironment()
-            .findGitDir()
-            .build()
-        Git(repository).use { git ->
-            df.setRepository(git.repository)
-            df.format(diff)
-            val scanner = Scanner(output.toString("UTF-8"))
-            var added = 0
-            var removed = 0
-            var lines = ""
-            while (scanner.hasNextLine()) {
-                val line: String = scanner.nextLine()
-                if (line.startsWith("+") && !line.startsWith("+++")) {
-                    added++
-                    println("ADDED")
-                } else if (line.startsWith("-") && !line.startsWith("---")) {
-                    removed++
-                    println("REMOVED")
-                }
-
-                lines += line
-                lines += "\n"
-            }
-            output.close()
-            df.close()
-            scanner.close()
-
-            return lines
-        }
-
-
     }
 
     @Throws(IOException::class)

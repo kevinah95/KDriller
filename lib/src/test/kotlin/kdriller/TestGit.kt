@@ -18,7 +18,6 @@
 package kdriller
 
 import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.util.*
@@ -55,7 +54,7 @@ internal class TestGit {
             "da39b1326dbc2edfe518b90672734a08f3c13458"
         )
 
-        for(commit in changeSets){
+        for (commit in changeSets) {
             assert(commit.hash in list_commits)
         }
 
@@ -63,7 +62,7 @@ internal class TestGit {
     }
 
     @Test
-    fun testGetCommit(){
+    fun testGetCommit() {
         val repo = Git(testFolder.resolve("small_repo").path)
         val commit = repo.getCommit("09f6182cef737db02a085e1d018963c7a29bde5a")
 
@@ -84,6 +83,16 @@ internal class TestGit {
         assert(commit.lines == 4)
         // TODO: commit.files
         assert(commit.diffEntries?.size == 1)
+
+
+        for (mf in commit.modifiedFiles){
+            println("DIFFFFFFFFFF")
+            println(mf.diff)
+            println("diff_parseddiff_parseddiff_parseddiff_parsed")
+            mf.diffParsed["added"]?.forEach { println(it) }
+            println(mf.sourceCode)
+            println(mf.sourceCodeBefore)
+        }
     }
 
 }
