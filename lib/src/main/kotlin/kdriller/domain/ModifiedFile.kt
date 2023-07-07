@@ -17,11 +17,10 @@
 
 package kdriller.domain
 
+import kdriller.utils.Conf
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.diff.DiffEntry
-import org.eclipse.jgit.diff.DiffFormatter
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.ObjectLoader
+import org.eclipse.jgit.diff.*
+import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevTree
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
@@ -50,7 +49,8 @@ data class ModifiedFile(
     val diffEtry: DiffEntry,
     private val projectPath: String,
     private val tree: RevTree,
-    private val parent: String?
+    private val parent: String?,
+    val conf: Conf
 ) {
     val cDiff = diffEtry
     var nloc = null
@@ -87,7 +87,23 @@ data class ModifiedFile(
             MessageWriter().use { writer ->
                 writer.rawStream.use { output ->
                     DiffFormatter(output).use { df ->
+                        // TODO: Improve this:
+                        val diffAlgorithm = if (conf.get("histogram") != null && conf.get("histogram") as Boolean) {
+                            HistogramDiff()
+                        } else {
+                            MyersDiff.INSTANCE
+                        }
+
+                        val rawTextComparator =
+                            if (conf.get("skip_whitespaces") != null && conf.get("skip_whitespaces") as Boolean) {
+                                RawTextComparator.WS_IGNORE_ALL
+                            } else {
+                                RawTextComparator.DEFAULT
+                            }
+
                         df.setRepository(git.repository)
+                        df.setDiffAlgorithm(diffAlgorithm)
+                        df.setDiffComparator(rawTextComparator)
                         df.format(cDiff)
                     }
                     return output.toString()
@@ -132,6 +148,11 @@ data class ModifiedFile(
                     if (line.startsWith("+") && !line.startsWith("+++")) {
                         modifiedLines["added"]?.add(Pair(countAdditions, line.substring(1)))
                         countDeletions -= 1
+                    }
+
+                    if (line == "\\ No newline at end of file") {
+                        countDeletions -= 1
+                        countAdditions -= 1
                     }
                 }
 

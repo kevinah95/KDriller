@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - _open_repository():
     - Implement _repo.config_writer().set_value("blame", "markUnblamableLines", "true").release()
   - get_list_commits():
-    - Implement reverse if in kwargs
+    - kwargs full implementation
   - checkout(self, _hash: str) -> None
   - reset(self) -> None
   - get_commits_last_modified_lines
@@ -21,30 +21,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - _get_blame
   - _useless_line
   - get_commits_modified_file:
-    - implement includeDeletedFiles
+    - check includeDeletedFiles behaviour
 - Repository:
   - _prepRepo():
     - implement clear method
   - traverseCommits():
     - Build the arguments to pass to git rev-list
-- utils/Config:
-  - build_args(self)
 
 ### Changed
 
+- domain/ModifiedFile:
+  - Review histogram implementation.
+- Git
+  - Review reverse behaviour with PyDriller
 - Repository:
   - traverseCommits():
     - Make it parallel
 - utils/Config:
   - Generic Exception to BadName exception
+  - build_args(self)
+- Test:
+  - TestRepository:
+    - testIgnoreDeletedWhitespaces
+    - testIgnoreAddWhitespacesAndChangedFile
 
-## [0.1.0] - 2023-07-05 
+## [0.3.0] - 2023-07-07
+
+### Added
+
+- domain/ModifiedFile:
+  - histogram
+  - skip_whitespaces
+- Git:
+  - Add list of revFilter.
+  - Implement reverse if in kwargs.
+- Repository:
+  - TextProgressMonitor when cloneRepository.
+  - Pass config to Git class.
+  - Pass revFilter to getListCommits.
+- utils/Config:
+  - Partial implementation of build_args(self).
+- test:
+  - logback.xml config file.
+  - Beta version of TestRepository.
+
+### Fixed
+
+- Repository:
+  - clone_repo_to option didn't work.
+
+## [0.2.0] - 2023-07-05 
 
 ### Added 
 
 - Repository:
   - _prepRepo():
-    - Make _conf.sanityCheckFilters() available
+    - Make _conf.sanityCheckFilters() available.
 
 ## [0.1.0] - 2023-07-04 
 

@@ -224,10 +224,12 @@ data class Commit(val commit: RevCommit, private val conf: Conf) {
                         val newTreeIterator = getCanonicalTreeParser(cObject)
                         diffIndex = getDiffEntries(oldTreeIterator, newTreeIterator!!)
                     }
+
+                    return _parseDiff(diffIndex)
                 }
             }
 
-            return _parseDiff(diffIndex)
+
         }
 
     fun _parseDiff(diffIndex: List<DiffEntry>?): List<ModifiedFile> {
@@ -237,7 +239,7 @@ data class Commit(val commit: RevCommit, private val conf: Conf) {
             parent = commit.getParent(0).name
         }
         for (diff in diffIndex!!){
-            modifiedFilesList.add(ModifiedFile(diff, projectPath, cObject.tree, parent))
+            modifiedFilesList.add(ModifiedFile(diff, projectPath, cObject.tree, parent, conf))
         }
 
         return modifiedFilesList

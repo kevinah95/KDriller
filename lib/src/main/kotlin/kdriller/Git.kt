@@ -25,11 +25,15 @@ import kdriller.domain.Commit
 import kdriller.utils.Conf
 import mu.KotlinLogging
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.revwalk.filter.AndRevFilter
+import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import java.io.Closeable
 import java.nio.file.Path
@@ -136,21 +140,29 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
      *
      * @return the generator of all the commits in the repo
      */
-    fun getListCommits(rev: String = Constants.HEAD) = sequence<Commit> {
+    fun getListCommits(rev: String = Constants.HEAD, revFilter: List<RevFilter> = listOf()) = sequence<Commit> {
         var revSort = RevSort.NONE
         if (_conf.get("reverse") != null) {
             revSort = RevSort.REVERSE
         }
 
-        val revId: ObjectId = repo?.exactRef(rev)?.objectId!!
+        val revId: ObjectId? = if (_conf.get("single") != null) {
+            repo?.resolve(_conf.get("single") as String)?.toObjectId()
+        } else {
+            repo?.exactRef(rev)?.objectId!!
+        }
+
         RevWalk(repo).use { walk ->
+            if (revFilter.size == 1)
+                walk.revFilter = revFilter[0];
+            else if (revFilter.size > 1)
+                walk.revFilter = AndRevFilter.create(revFilter)
             val commit = walk.parseCommit(revId)
             walk.markStart(commit)
             walk.sort(revSort, true) // We can extend multiple sorts
             for (revCommit in walk) {
                 yield(getCommitFromJGit(revCommit))
             }
-            walk.dispose()
         }
     }
 
@@ -256,6 +268,20 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
     fun getCommitsModifiedFile(filepath: String, includeDeletedFiles: Boolean): List<String> {
         val path = Path(filepath).toString()
         val commits = mutableListOf<String>()
+
+        // see this: https://stackoverflow.com/questions/11471836/how-to-git-log-follow-path-in-jgit-to-retrieve-the-full-history-includi
+//        RevWalk(repo).use { walk ->
+//            val config = Config()
+//            config.setBoolean("diff", null, "renames", true)
+//            val followFilter = FollowFilter.create(filepath, config.get(DiffConfig.KEY))
+//            val commit = walk.parseCommit(repo?.resolve(Constants.HEAD))
+//            walk.treeFilter = followFilter
+//            walk.markStart(commit)
+//            for (revCommit in walk) {
+//                commits.add(revCommit.name)
+//            }
+//        }
+
 
         Git(repo).use { git ->
             val logs = git.log().addPath(path).call()

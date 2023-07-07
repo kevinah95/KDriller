@@ -19,20 +19,13 @@ package kdriller.utils
 
 import kdriller.Git
 import kdriller.domain.Commit
-import java.lang.Exception
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import mu.KotlinLogging
-import org.eclipse.jgit.internal.storage.commitgraph.CommitGraphLoader
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.RefDatabase
 import org.eclipse.jgit.revwalk.RevSort
-import org.eclipse.jgit.revwalk.filter.AndRevFilter
 import org.eclipse.jgit.revwalk.filter.AuthorRevFilter
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter
 import org.eclipse.jgit.revwalk.filter.MaxCountRevFilter
 import org.eclipse.jgit.revwalk.filter.RevFilter
+import java.util.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -116,8 +109,10 @@ data class Conf(val options: Map<String, Any?>) {
         }
 
         @JvmStatic
-        fun _replaceTimezone(dt: LocalDateTime): ZonedDateTime {
-            return dt.atZone(ZoneId.of("UTC"))
+        fun _replaceTimezone(dt: Date): Date {
+            val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            cal.time = dt
+            return cal.time
         }
 
     }
@@ -273,42 +268,46 @@ data class Conf(val options: Map<String, Any?>) {
     }
 
     // TODO: build_args
-    fun buildArgs() {
+    fun buildArgs(): Pair<List<RevFilter>, List<String>> {
 
         val single = get("single")
-        val order = get("order")
+        val since = get("since")
+        val sinceAsFilter = get("since_as_filter")
+        val until = get("to")
+        //val from_commit = self.get_starting_commit()
+        //val to_commit = self.get_ending_commit()
         val includeRefs = get("include_refs")
         val includeRemotes = get("include_remotes")
+        val branch = get("only_in_branch")
         val authors = get("only_authors")
+        val order = get("order")
 
-        val revLimiter = mutableListOf<RevFilter>()
+        val rev = mutableListOf<RevFilter>()
 
         if (single != null) {
-            revLimiter.add(MaxCountRevFilter.create(1))
+            rev.add(MaxCountRevFilter.create(1))
         }
 
         // from
         // see https://stackoverflow.com/questions/27361538/how-to-show-changes-between-commits-with-jgit
 
-
         if (get("only_no_merge") == true) {
-
-            revLimiter.add(RevFilter.NO_MERGES) // RevWalk().revFilter
+            rev.add(RevFilter.NO_MERGES)
         }
 
         when (order) {
+            null -> RevSort.NONE
             "reverse" -> RevSort.REVERSE
             "topo-order" -> RevSort.TOPO
             "date-order" -> RevSort.COMMIT_TIME_DESC
         }
 
         if (includeRefs != null) {
-            revLimiter.add(RevFilter.ALL)
+            // TODO: remove this rev.add(RevFilter.ALL) and use RefDatabase.ALL
+            // RefDatabase.ALL
             // repo?.refDatabase?.getRefsByPrefix(RefDatabase.ALL)
             // see: http://www.java2s.com/example/java-src/pkg/kr/re/ec/grigit/graph/ui/revwalker-7bda3.html
         }
-
-
 
         if (includeRemotes != null) {
             // TODO: includeRemotes
@@ -318,17 +317,24 @@ data class Conf(val options: Map<String, Any?>) {
 
         if (authors != null) {
             for (author in authors as List<String>) {
-
-                revLimiter.add(AuthorRevFilter.create(author))
+                rev.add(AuthorRevFilter.create(author))
             }
-            AndRevFilter.create(revLimiter)
-
         }
+
         // http://www.java2s.com/example/java-src/pkg/kr/re/ec/grigit/graph/ui/revwalker-7bda3.html
         // if (revLimiter.size() == 1)
         //      walk.setRevFilter(revLimiter.get(0));
         // else if (revLimiter.size() > 1)
         //      walk.setRevFilter(AndRevFilter.create(revLimiter))
+        if (since != null) {
+            rev.add(CommitTimeRevFilter.after(since as Date))
+        }
+
+        if (until != null) {
+            rev.add(CommitTimeRevFilter.before(until as Date))
+        }
+
+        return Pair(rev, listOf())
     }
 
     /**
@@ -372,13 +378,13 @@ data class Conf(val options: Map<String, Any?>) {
 
     fun _checkTimezones() {
         if (get("since") != null) {
-            setValue("since", _replaceTimezone((get("since") as LocalDateTime)))
+            setValue("since", _replaceTimezone((get("since") as Date)))
         }
         if (get("since_as_filter") != null) {
-            setValue("since_as_filter", _replaceTimezone((get("since_as_filter") as LocalDateTime)))
+            setValue("since_as_filter", _replaceTimezone((get("since_as_filter") as Date)))
         }
         if (get("to") != null) {
-            setValue("to", _replaceTimezone((get("to") as LocalDateTime)))
+            setValue("to", _replaceTimezone((get("to") as Date)))
         }
     }
 }

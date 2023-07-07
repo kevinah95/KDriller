@@ -26,9 +26,10 @@ import kdriller.utils.Conf
 import kotlinx.coroutines.*
 import mu.KotlinLogging
 import org.apache.commons.io.FilenameUtils
+import org.eclipse.jgit.lib.TextProgressMonitor
 import java.io.File
 import java.nio.file.Files
-import java.time.LocalDateTime
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -40,7 +41,6 @@ import kotlin.time.measureTime
 import org.eclipse.jgit.api.Git as Repo
 
 private val logger = KotlinLogging.logger {}
-
 
 /**
  * This is the main class of KDriller, responsible for running the study.
@@ -84,7 +84,7 @@ private val logger = KotlinLogging.logger {}
 class Repository(
     val pathToRepo: List<String>,
     single: String? = null,
-    since: LocalDateTime? = null, sinceAsFilter: LocalDateTime? = null, to: LocalDateTime? = null,
+    since: Date? = null, sinceAsFilter: Date? = null, to: Date? = null,
     fromCommit: String? = null, toCommit: String? = null,
     fromTag: String? = null, toTag: String? = null,
     includeRefs: Boolean = false,
@@ -167,10 +167,10 @@ class Repository(
          * @return Chunks of commits
          */
         @JvmStatic
-        fun _splitInChunks(fullList: List<Commit>, numWorkers: Int): List<List<Commit>>{
+        fun _splitInChunks(fullList: List<Commit>, numWorkers: Int): List<List<Commit>> {
             val numChunks = ceil((fullList.size / numWorkers).toDouble()).toInt()
             val chunks = mutableListOf<List<Commit>>()
-            for (i in 0..fullList.size step numChunks){
+            for (i in 0..fullList.size step numChunks) {
                 chunks.add(fullList.slice(i until i + numChunks))
             }
             return chunks
@@ -201,7 +201,8 @@ class Repository(
         if (Files.isDirectory(repoFolderPath)) {
             logger.info("Reusing folder $repoFolder for $repo")
         } else {
-            Repo.cloneRepository().setURI(repo).setDirectory(repoFolderPath.toFile()).call().use {
+            Repo.cloneRepository().setURI(repo).setDirectory(repoFolderPath.toFile())
+                .setProgressMonitor(TextProgressMonitor()).call().use {
                 logger.info("Cloning $repo in temporary folder $repoFolder")
             }
         }
@@ -213,7 +214,7 @@ class Repository(
         val cloneFolder: String?
         if (_conf.get("clone_repo_to") != null) {
             val cloneFolderPath = Path(_conf.get("clone_repo_to") as String)
-            if (Files.isDirectory(cloneFolderPath)) {
+            if (!Files.isDirectory(cloneFolderPath)) {
                 throw Exception("Not a directory: $cloneFolderPath")
             }
             cloneFolder = cloneFolderPath.toString()
@@ -237,7 +238,7 @@ class Repository(
         // of which one we are currently analyzing
         _conf.setValue("path_to_repo", localPathRepo)
 
-        git = Git(localPathRepo)
+        git = Git(localPathRepo, _conf)
 
         // saving the Git object for further use
         _conf.setValue("git", git)
@@ -297,12 +298,14 @@ class Repository(
                         }
 
                         // TODO: Build the arguments to pass to git rev-list.
+                        val (revFilter, kwargs) = _conf.buildArgs()
 
-                        for (job in git.getListCommits().map { Callable { it } }.map(workerPool::submit)) {
+                        for (job in git.getListCommits(revFilter = revFilter).map { Callable { it } }
+                            .map(workerPool::submit)) {
                             val commit = job.get() as Commit
                             logger.info("Commit #${commit.hash} in ${commit.committerDate} from ${commit.author.name}")
 
-                            if (_conf.isCommitFiltered(commit)){
+                            if (_conf.isCommitFiltered(commit)) {
                                 logger.info("Commit #${commit.hash} filtered")
                                 continue
                             }
@@ -323,10 +326,9 @@ class Repository(
     }
 
 
-
 }
 
-class MalformedUrl(message:String): Exception(message)
+class MalformedUrl(message: String) : Exception(message)
 
 fun <A, B> List<A>.pmap(f: suspend (A) -> B): List<B> = runBlocking {
     map { async(Dispatchers.Default) { f(it) } }.map { it.await() }
