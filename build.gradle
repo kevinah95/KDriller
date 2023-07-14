@@ -1,0 +1,57 @@
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform' version '1.8.21'
+    id 'maven-publish'
+}
+
+group = 'io.github.kevinah95'
+version = '0.5.0'
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = '1.8'
+        }
+        withJava()
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
+    }
+    sourceSets {
+        commonMain {
+            dependencies {
+                // For JGit
+                implementation 'org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r'
+                implementation 'org.eclipse.jgit:org.eclipse.jgit.archive:6.6.0.202305301015-r'
+                implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:6.6.0.202305301015-r'
+                implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.5.0.202303070854-r'
+                implementation 'commons-io:commons-io:2.13.0'
+
+                // Coroutines
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2'
+
+                // Logger
+                implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
+                implementation 'ch.qos.logback:logback-classic:1.4.8'
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation kotlin('test')
+            }
+        }
+        jvmMain {
+
+        }
+        jvmTest {
+
+        }
+    }
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+}

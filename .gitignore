@@ -134,8 +134,8 @@ fabric.properties
 *.nar
 *.ear
 *.zip
-!lib/src/test/resources/test-repos.zip
-lib/src/test/resources/test-repos/
+!src/commonTest/resources/test-repos.zip
+src/commonTest/resources/test-repos/
 *.tar.gz
 *.rar
 
