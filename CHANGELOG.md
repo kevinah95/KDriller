@@ -14,8 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Implement _repo.config_writer().set_value("blame", "markUnblamableLines", "true").release()
   - get_list_commits():
     - kwargs full implementation
-  - checkout(self, _hash: str) -> None
-  - reset(self) -> None
   - get_commits_last_modified_lines
   - _calculate_last_commits
   - _get_blame
@@ -32,8 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - domain/ModifiedFile:
   - Review histogram implementation.
-- Git
-  - Review reverse behaviour with PyDriller
 - Repository:
   - traverseCommits():
     - Make it parallel
@@ -44,6 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TestRepository:
     - testIgnoreDeletedWhitespaces
     - testIgnoreAddWhitespacesAndChangedFile
+
+## [0.4.0] - 2023-07-14
+
+### Added
+
+- Git
+  - checkout(self, _hash: str) -> None
+  - reset(self) -> None
+- Test:
+  - TestGit
+
+### Changed
+
+- Git
+  - Review reverse behaviour with PyDriller
+
 
 ## [0.3.0] - 2023-07-07
 

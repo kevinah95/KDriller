@@ -25,9 +25,10 @@ import kdriller.domain.Commit
 import kdriller.utils.Conf
 import mu.KotlinLogging
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.blame.BlameGenerator
+import org.eclipse.jgit.blame.BlameResult
+import org.eclipse.jgit.diff.DiffConfig
+import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevSort
@@ -98,6 +99,10 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
     private fun _openRepository() {
         val builder = FileRepositoryBuilder()
 
+        // TODO: set blame config
+        //var conf = Config()
+        //conf.setBoolean("blame", null, "markUnblamableLines", true)
+
         // Needs to resolve .git directory because jgit read from this folder
         _repo = builder.setGitDir(path.resolve(".git").toFile())
             .readEnvironment()
@@ -141,9 +146,9 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
      * @return the generator of all the commits in the repo
      */
     fun getListCommits(rev: String = Constants.HEAD, revFilter: List<RevFilter> = listOf()) = sequence<Commit> {
-        var revSort = RevSort.NONE
+        var revSort = RevSort.REVERSE
         if (_conf.get("reverse") != null) {
-            revSort = RevSort.REVERSE
+            revSort = RevSort.NONE
         }
 
         val revId: ObjectId? = if (_conf.get("single") != null) {
@@ -190,7 +195,19 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
         return Commit(commit, _conf)
     }
 
-    // TODO: checkout. Note: I don't know if it is possible with repo
+    /**
+     * Checkout the repo at the speficied commit.
+     * BE CAREFUL: this will change the state of the repo, hence it should
+     * *not* be used with more than 1 thread.
+     *
+     * @param [_hash] commit hash to checkout
+     */
+    fun checkout(_hash: String){
+        Git.open(path.toFile()).use { git ->
+            git.checkout().setForced(true).setName(_hash).call()
+            git.clean()
+        }
+    }
 
     /**
      * Obtain the list of the files (excluding .git directory).
@@ -200,12 +217,21 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
     fun files(): List<String> {
         return path.toFile()
             .walkTopDown()
-            .filter { !it.path.toString().contains(".git") }
+            .filter { !it.path.toString().contains(".git") && it.isFile }
             .map { it.absolutePath.toString() }
             .toList()
     }
 
-    // TODO: reset
+    /**
+     * Reset the state of the repo, checking out the main branch and
+     * discarding local changes (-f option).
+     *
+     */
+    fun reset(){
+        Git.open(path.toFile()).use { git ->
+            git.checkout().setForced(true).setName(_conf.get("main_branch") as String).call()
+        }
+    }
 
     /**
      * Calculate total number of commits.
@@ -224,10 +250,16 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
      * @return [Commit] the commit the tag referred to
      */
     fun getCommitFromTag(tag: String): Commit {
-        RevWalk(repo).use { walk ->
-            val commit = walk.parseCommit(repo?.resolve(tag))
-            return Commit(commit, _conf)
+        try {
+            RevWalk(repo).use { walk ->
+                val commit = walk.parseCommit(repo?.resolve(tag))
+                return Commit(commit, _conf)
+            }
+        } catch (e: Exception) {
+            logger.debug("Tag $tag not found")
+            throw e
         }
+
     }
 
 
@@ -258,6 +290,7 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
 
 
     // TODO: implement includeDeletedFiles
+
     /**
      * Given a filepath, returns all the commits that modified this file (following renames).
      *
@@ -265,7 +298,7 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
      * @param [includeDeletedFiles] if true, include commits that modifies a deleted file
      * @return the list of commits' hash
      */
-    fun getCommitsModifiedFile(filepath: String, includeDeletedFiles: Boolean): List<String> {
+    fun getCommitsModifiedFile(filepath: String, includeDeletedFiles: Boolean = false): List<String> {
         val path = Path(filepath).toString()
         val commits = mutableListOf<String>()
 
@@ -300,6 +333,6 @@ class Git(path: String, var conf: Conf? = null) : Closeable {
     }
 
     override fun close() {
-        //repo?.close()
+        //_repo?.close()
     }
 }

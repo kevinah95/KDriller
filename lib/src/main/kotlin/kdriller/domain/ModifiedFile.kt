@@ -18,6 +18,7 @@
 package kdriller.domain
 
 import kdriller.utils.Conf
+import mu.KotlinLogging
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.*
 import org.eclipse.jgit.lib.*
@@ -26,11 +27,14 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.MessageWriter
 import java.io.IOException
+import java.lang.Exception
 import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Type of Modification. Can be ADD, COPY, RENAME, DELETE, MODIFY or UNKNOWN.
@@ -112,15 +116,58 @@ data class ModifiedFile(
         }
     }
 
-    val sourceCodeBefore: String?
+    val content: ByteArray?
+        get() {
+            return getCommitContent(cDiff.newPath)
+        }
+
+    val contentBefore: ByteArray?
         get() {
             return getCommitContent(cDiff.newPath, true)
         }
 
     val sourceCode: String?
         get() {
-            return getCommitContent(cDiff.newPath)
+            val tempContent = content
+            return if(tempContent != null){
+                _getDecodedContent(tempContent)
+            } else{
+                null
+            }
         }
+
+    val sourceCodeBefore: String?
+        get() {
+            val tempContentBefore = contentBefore
+            return if(tempContentBefore != null){
+                _getDecodedContent(tempContentBefore)
+            } else{
+                null
+            }
+        }
+
+    val addedLines: Int
+        get() {
+            var addedLines = 0
+            for(line in diff.replace("\r", "").split("\n")){
+                if (line.startsWith("+") && !line.startsWith("+++")){
+                    addedLines++
+                }
+            }
+            return addedLines
+        }
+
+    val deletedLines: Int
+        get() {
+            var deletedLines = 0
+            for(line in diff.replace("\r", "").split("\n")){
+                if (line.startsWith("-") && !line.startsWith("---")){
+                    deletedLines++
+                }
+            }
+            return deletedLines
+        }
+
     val diffParsed: Map<String, List<Pair<Int, String>>>
         get() {
             val modifiedLines = mutableMapOf<String, MutableList<Pair<Int, String>>>(
@@ -230,7 +277,7 @@ data class ModifiedFile(
         }
 
     @Throws(IOException::class)
-    private fun getCommitContent(path: String, walkToParent: Boolean = false): String? {
+    private fun getCommitContent(path: String, walkToParent: Boolean = false): ByteArray? {
         Git.open(Path(projectPath).resolve(".git").toFile()).use { git ->
             var treeToWalk: RevTree
             if (walkToParent && parent != null) {
@@ -246,10 +293,18 @@ data class ModifiedFile(
                 val blobId: ObjectId = treeWalk.getObjectId(0)
                 git.repository.newObjectReader().use { objectReader ->
                     val objectLoader: ObjectLoader = objectReader.open(blobId)
-                    val bytes = objectLoader.bytes
-                    return String(bytes, StandardCharsets.UTF_8)
+                    return objectLoader.bytes
                 }
             }
+        }
+    }
+
+    private fun _getDecodedContent(content: ByteArray) : String?{
+        return try {
+            String(content, StandardCharsets.UTF_8)
+        } catch (e: Exception){
+            logger.debug("Could not load the content for file $filename")
+            null
         }
     }
 }
