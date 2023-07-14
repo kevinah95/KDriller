@@ -32,7 +32,7 @@ cd kdriller
 
 **(Important)** I tend to not accept Pull Requests without tests, so:
 
-- unzip the `test-repos.zip` zip file in `lib/src/test/resources/test-repos.zip`.
+- unzip the `test-repos.zip` zip file in `src/commonTest/resources/test-repos.zip`.
 - inside are many "small repositories" that were manually created to test KDriller. Use one of your choice to test your feature (check the existing tests for inspiration)
 - if none is suitable for testing your feature, create a new one. **Be careful**: if you create a new one, do not forget to upload a new zip file `test-repos.zip` that includes your new repository, otherwise the tests will fail.
 
