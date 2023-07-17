@@ -18,14 +18,9 @@
 package io.github.kevinah95.kdriller.domain
 
 /**
- * Maintainability properties of the Delta Maintainability Model.
+ * This class represents a method in a class. Contains various information
+ * extracted through Lizard.
  */
-enum class DMMProperty(val value: Int) {
-    UNIT_SIZE(1),
-    UNIT_COMPLEXITY(2),
-    UNIT_INTERFACING(3)
-}
-
 data class Method @JvmOverloads constructor(val func: Any?) {
     var name: String = ""
     var longName: String = ""

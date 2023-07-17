@@ -202,8 +202,22 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
     val lines: Int
         get() = insertions + deletions
 
-    // TODO: implement files
+    /**
+     * Return the number of modified files of the commit (as shown from --shortstat).
+     *
+     * @return Int modified files number
+     */
+    val files: Int
+        get() = diffEntries!!.size
 
+    /**
+     * Return a list of modified files. The list is empty if the commit is
+     * a merge commit. For more info on this, see
+     * https://haacked.com/archive/2014/02/21/reviewing-merge-commits/ or
+     * https://github.com/ishepard/pydriller/issues/89#issuecomment-590243707
+     *
+     * @return List<ModifiedFile> modifications
+     */
     val modifiedFiles: List<ModifiedFile>
         get() {
             var diffIndex: List<DiffEntry>?
@@ -244,14 +258,27 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
 
         return modifiedFilesList
     }
+
+    /**
+     * Return True if the commit is in the main branch, False otherwise.
+     *
+     * @return Boolean in_main_branch
+     */
     val inMainBranch: Boolean
         get() {
             val mainBranch = conf.get("main_branch") as String
             return mainBranch in branches
         }
 
+    /**
+     * Return the set of branches that contain the commit.
+     *
+     * @return Set<String> branches
+     */
     val branches: Set<String>
         get() {
+            // TODO: include_remotes
+            // TODO: include_refs
             val branches = mutableSetOf<String>()
             Git.open(Path(projectPath).resolve(".git").toFile()).use { git ->
                 git.branchList()
@@ -263,6 +290,12 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
             return branches
         }
 
+    // TODO: dmm_unit_size
+    // TODO: dmm_unit_complexity
+    // TODO: dmm_unit_interfacing
+    // TODO: _delta_maintainability
+    // TODO: _delta_risk_profile
+    // TODO: _good_change_proportion
 
     val diffEntries: List<DiffEntry>?
         get() {
@@ -324,20 +357,6 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
                 val treeId = commit.tree.id
                 git.repository.newObjectReader().use { reader ->
                     return CanonicalTreeParser(null, reader, treeId)
-                }
-            }
-        }
-    }
-
-    @Throws(IOException::class)
-    private fun getCommitContent(commit: RevCommit, path: String): String? {
-        Git.open(Path(projectPath).resolve(".git").toFile()).use { git ->
-            TreeWalk.forPath(git.repository, path, commit.tree).use { treeWalk ->
-                val blobId: ObjectId = treeWalk.getObjectId(0)
-                git.repository.newObjectReader().use { objectReader ->
-                    val objectLoader: ObjectLoader = objectReader.open(blobId)
-                    val bytes = objectLoader.bytes
-                    return String(bytes, StandardCharsets.UTF_8)
                 }
             }
         }

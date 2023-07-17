@@ -83,7 +83,7 @@ internal class TestGit {
         assertEquals(4, commit.insertions)
         assertEquals(0, commit.deletions)
         assertEquals(4, commit.lines)
-        // TODO: commit.files
+        assertEquals(1, commit.files)
         assertEquals(1, commit.diffEntries?.size)
     }
 
@@ -269,8 +269,7 @@ internal class TestGit {
         assertEquals(1, commit.modifiedFiles.size)
 
         assertEquals("Matricula.java", commit.modifiedFiles[0].newPath)
-        // TODO: get FileBody
-        //assertTrue(commit.modifiedFiles[0].diff.startsWith("@@ -0,0 +1,62 @@\n+package model;"))
+        assertTrue(commit.modifiedFiles[0].diff.startsWith("diff --git a/Matricula.java b/Matricula.java\nnew file mode 100644"))
         assertNotNull(commit.modifiedFiles[0].content)
         commit.modifiedFiles[0].content?.decodeToString()?.startsWith("package model;")?.let { assertTrue(it) }
 

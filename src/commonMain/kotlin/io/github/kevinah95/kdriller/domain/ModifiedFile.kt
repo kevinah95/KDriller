@@ -36,27 +36,15 @@ import kotlin.io.path.pathString
 
 private val logger = KotlinLogging.logger {}
 
-/**
- * Type of Modification. Can be ADD, COPY, RENAME, DELETE, MODIFY or UNKNOWN.
- */
-enum class ModificationType(val value: Int) {
-    ADD(1),
-    COPY(2),
-    RENAME(3),
-    DELETE(4),
-    MODIFY(5),
-    UNKNOWN(6)
-}
-
 @Suppress("FunctionName")
 data class ModifiedFile(
-    val diffEtry: DiffEntry,
+    val diffEntry: DiffEntry,
     private val projectPath: String,
     private val tree: RevTree,
     private val parent: String?,
     val conf: Conf
 ) {
-    val cDiff = diffEtry
+    private val cDiff = diffEntry
     var nloc = null
     var complexity = null
     var tokenCount = null
@@ -118,12 +106,12 @@ data class ModifiedFile(
 
     val content: ByteArray?
         get() {
-            return getCommitContent(cDiff.newPath)
+            return _getCommitContent(cDiff.newPath)
         }
 
     val contentBefore: ByteArray?
         get() {
-            return getCommitContent(cDiff.newPath, true)
+            return _getCommitContent(cDiff.newPath, true)
         }
 
     val sourceCode: String?
@@ -167,6 +155,56 @@ data class ModifiedFile(
             }
             return deletedLines
         }
+
+    /**
+     * Old path of the file. Can be null if the file is added.
+     *
+     * @return String old path
+     */
+    val oldPath: String?
+        get() {
+            if (cDiff.oldPath != DiffEntry.DEV_NULL) {
+                return cDiff.oldPath
+            }
+            return null
+        }
+
+    /**
+     * New path of the file. Can be null if the file is deleted.
+     *
+     * @return String new path
+     */
+    val newPath: String?
+        get() {
+            if (cDiff.newPath != DiffEntry.DEV_NULL) {
+                return cDiff.newPath
+            }
+            return null
+        }
+
+    /**
+     * Return the filename. Given a path-like-string (e.g.
+     * "/Users/dspadini/pydriller/myfile.py") returns only the filename
+     * (e.g. "myfile.py")
+     *
+     * @return String filename
+     */
+    val filename: String
+        get() {
+            val path: String?
+            if (newPath != null) {
+                path = newPath
+            } else {
+                assert(oldPath != null)
+                path = oldPath
+            }
+            return path?.let { Path(it).name }!!
+        }
+
+    // TODO: property language_supported
+    // TODO: property nloc
+    // TODO: property complexity
+    // TODO: property token_count
 
     val diffParsed: Map<String, List<Pair<Int, String>>>
         get() {
@@ -218,51 +256,13 @@ data class ModifiedFile(
         return Pair(deleteLineNumber, additionsLineNumber)
     }
 
+    // TODO: property methods
+    // TODO: property methods_before
+    // TODO: property changed_methods
+    // TODO: property _risk_profile
+    // TODO: property _delta_risk_profile
+    // TODO: _calculate_metrics
 
-    /**
-     * Old path of the file. Can be null if the file is added.
-     *
-     * @return String old path
-     */
-    val oldPath: String?
-        get() {
-            if (cDiff.oldPath != DiffEntry.DEV_NULL) {
-                return cDiff.oldPath
-            }
-            return null
-        }
-
-    /**
-     * New path of the file. Can be null if the file is deleted.
-     *
-     * @return String new path
-     */
-    val newPath: String?
-        get() {
-            if (cDiff.newPath != DiffEntry.DEV_NULL) {
-                return cDiff.newPath
-            }
-            return null
-        }
-
-    /**
-     * Return the filename. Given a path-like-string (e.g.
-     * "/Users/dspadini/pydriller/myfile.py") returns only the filename
-     * (e.g. "myfile.py")
-     *
-     * @return String filename
-     */
-    val filename: String
-        get() {
-            val path: String?
-            if (newPath != null) {
-                path = newPath
-            } else {
-                assert(oldPath != null)
-                path = oldPath
-            }
-            return path?.let { Path(it).name }!!
-        }
 
     val filepath: String
         get() {
@@ -277,7 +277,7 @@ data class ModifiedFile(
         }
 
     @Throws(IOException::class)
-    private fun getCommitContent(path: String, walkToParent: Boolean = false): ByteArray? {
+    private fun _getCommitContent(path: String, walkToParent: Boolean = false): ByteArray? {
         Git.open(Path(projectPath).resolve(".git").toFile()).use { git ->
             var treeToWalk: RevTree
             if (walkToParent && parent != null) {
