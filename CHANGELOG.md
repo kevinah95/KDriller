@@ -41,6 +41,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - testIgnoreDeletedWhitespaces
     - testIgnoreAddWhitespacesAndChangedFile
 
+## [0.6.0] - 2023-07-17
+
+### Added
+
+- Builder pattern to Repository class.
+
 ## [0.5.0] - 2023-07-14
 
 ### Added

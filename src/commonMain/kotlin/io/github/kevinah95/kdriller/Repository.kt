@@ -83,34 +83,117 @@ private val logger = KotlinLogging.logger {}
 @Suppress("FunctionName", "RedundantIf", "unused")
 class Repository @JvmOverloads constructor(
     val pathToRepo: List<String>,
-    single: String? = null,
-    since: Date? = null, sinceAsFilter: Date? = null, to: Date? = null,
-    fromCommit: String? = null, toCommit: String? = null,
-    fromTag: String? = null, toTag: String? = null,
-    includeRefs: Boolean? = false,
-    includeRemotes: Boolean? = false,
-    numWorkers: Int? = 1,
-    onlyInBranch: String? = null,
-    onlyModificationsWithFileTypes: List<String>? = null,
-    onlyNoMerge: Boolean? = false,
-    onlyAuthors: List<String>? = null,
-    onlyCommits: List<String>? = null,
-    onlyReleases: Boolean? = false,
-    filepath: String? = null,
-    includeDeletedFiles: Boolean? = false,
-    histogramDiff: Boolean? = false,
-    skipWhitespaces: Boolean? = false,
-    cloneRepoTo: String? = null,
-    order: String? = null
+    val single: String? = null,
+    val since: Date? = null,
+    val sinceAsFilter: Date? = null,
+    val to: Date? = null,
+    val fromCommit: String? = null,
+    val toCommit: String? = null,
+    val fromTag: String? = null,
+    val toTag: String? = null,
+    val includeRefs: Boolean? = false,
+    val includeRemotes: Boolean? = false,
+    val numWorkers: Int? = 1,
+    val onlyInBranch: String? = null,
+    val onlyModificationsWithFileTypes: List<String>? = null,
+    val onlyNoMerge: Boolean? = false,
+    val onlyAuthors: List<String>? = null,
+    val onlyCommits: List<String>? = null,
+    val onlyReleases: Boolean? = false,
+    val filepath: String? = null,
+    val includeDeletedFiles: Boolean? = false,
+    val histogramDiff: Boolean? = false,
+    val skipWhitespaces: Boolean? = false,
+    val cloneRepoTo: String? = null,
+    val order: String? = null,
 ) {
-
     private lateinit var _tmpDir: File
-
     private var git: Git? = null
-
     private var _conf: Conf
-
     private var _cleanup: Boolean = false
+
+    data class Builder(
+        val pathToRepo: List<String>,
+    ) {
+        private var single: String? = null
+        private var since: Date? = null
+        private var sinceAsFilter: Date? = null
+        private var to: Date? = null
+        private var fromCommit: String? = null
+        private var toCommit: String? = null
+        private var fromTag: String? = null
+        private var toTag: String? = null
+        private var includeRefs: Boolean? = false
+        private var includeRemotes: Boolean? = false
+        private var numWorkers: Int? = 1
+        private var onlyInBranch: String? = null
+        private var onlyModificationsWithFileTypes: List<String>? = null
+        private var onlyNoMerge: Boolean? = false
+        private var onlyAuthors: List<String>? = null
+        private var onlyCommits: List<String>? = null
+        private var onlyReleases: Boolean? = false
+        private var filepath: String? = null
+        private var includeDeletedFiles: Boolean? = false
+        private var histogramDiff: Boolean? = false
+        private var skipWhitespaces: Boolean? = false
+        private var cloneRepoTo: String? = null
+        private var order: String? = null
+        fun single(single: String) = apply { this.single = single }
+        fun since(since: Date) = apply { this.since = since }
+        fun sinceAsFilter(sinceAsFilter: Date) = apply { this.sinceAsFilter = sinceAsFilter }
+        fun to(to: Date) = apply { this.to = to }
+        fun fromCommit(fromCommit: String) = apply { this.fromCommit = fromCommit }
+        fun toCommit(toCommit: String) = apply { this.toCommit = toCommit }
+        fun fromTag(fromTag: String) = apply { this.fromTag = fromTag }
+        fun toTag(toTag: String) = apply { this.toTag = toTag }
+        fun includeRefs(includeRefs: Boolean) = apply { this.includeRefs = includeRefs }
+        fun includeRemotes(includeRemotes: Boolean) = apply { this.includeRemotes = includeRemotes }
+        fun numWorkers(numWorkers: Int) = apply { this.numWorkers = numWorkers }
+        fun onlyInBranch(onlyInBranch: String) = apply { this.onlyInBranch = onlyInBranch }
+        fun onlyModificationsWithFileTypes(onlyModificationsWithFileTypes: List<String>) =
+            apply { this.onlyModificationsWithFileTypes = onlyModificationsWithFileTypes }
+
+        fun onlyNoMerge(onlyNoMerge: Boolean) = apply { this.onlyNoMerge = onlyNoMerge }
+        fun onlyAuthors(onlyAuthors: List<String>) = apply { this.onlyAuthors = onlyAuthors }
+        fun onlyCommits(onlyCommits: List<String>) = apply { this.onlyCommits = onlyCommits }
+        fun onlyReleases(onlyReleases: Boolean) = apply { this.onlyReleases = onlyReleases }
+        fun filepath(filepath: String) = apply { this.filepath = filepath }
+        fun includeDeletedFiles(includeDeletedFiles: Boolean) = apply { this.includeDeletedFiles = includeDeletedFiles }
+        fun histogramDiff(histogramDiff: Boolean) = apply { this.histogramDiff = histogramDiff }
+        fun skipWhitespaces(skipWhitespaces: Boolean) = apply { this.skipWhitespaces = skipWhitespaces }
+        fun cloneRepoTo(cloneRepoTo: String) = apply { this.cloneRepoTo = cloneRepoTo }
+        fun order(order: String) = apply { this.order = order }
+        fun build(): Repository {
+            if (pathToRepo == null)
+                throw IllegalArgumentException("pathToRepo is required")
+            return Repository(
+                pathToRepo,
+                single,
+                since,
+                sinceAsFilter,
+                to,
+                fromCommit,
+                toCommit,
+                fromTag,
+                toTag,
+                includeRefs,
+                includeRemotes,
+                numWorkers,
+                onlyInBranch,
+                onlyModificationsWithFileTypes,
+                onlyNoMerge,
+                onlyAuthors,
+                onlyCommits,
+                onlyReleases,
+                filepath,
+                includeDeletedFiles,
+                histogramDiff,
+                skipWhitespaces,
+                cloneRepoTo,
+                order
+            )
+        }
+    }
 
 
     init {
@@ -203,8 +286,8 @@ class Repository @JvmOverloads constructor(
         } else {
             Repo.cloneRepository().setURI(repo).setDirectory(repoFolderPath.toFile())
                 .setProgressMonitor(TextProgressMonitor()).call().use {
-                logger.info("Cloning $repo in temporary folder $repoFolder")
-            }
+                    logger.info("Cloning $repo in temporary folder $repoFolder")
+                }
         }
 
         return repoFolder
