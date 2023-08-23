@@ -412,11 +412,3 @@ class Repository @JvmOverloads constructor(
 }
 
 class MalformedUrl(message: String) : Exception(message)
-
-fun <A, B> List<A>.pmap(f: suspend (A) -> B): List<B> = runBlocking {
-    map { async(Dispatchers.Default) { f(it) } }.map { it.await() }
-}
-
-suspend fun <A, B> Iterable<A>.pmap(f: suspend (A) -> B): List<B> = coroutineScope {
-    map { async { f(it) } }.awaitAll()
-}
