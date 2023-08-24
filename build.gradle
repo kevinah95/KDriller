@@ -14,6 +14,8 @@ repositories {
 dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
 
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
     // For JGit
     implementation 'org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r'
     implementation 'org.eclipse.jgit:org.eclipse.jgit.archive:6.6.0.202305301015-r'
@@ -28,6 +30,7 @@ dependencies {
     implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
     implementation 'ch.qos.logback:logback-classic:1.4.8'
 
+    // Analyzer
     implementation 'io.github.kevinah95:KLizard:0.1.0'
 }
 
@@ -36,5 +39,5 @@ test {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(8)
 }
