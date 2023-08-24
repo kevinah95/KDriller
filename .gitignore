@@ -134,8 +134,7 @@ fabric.properties
 *.nar
 *.ear
 *.zip
-!src/commonTest/resources/test-repos.zip
-src/commonTest/resources/test-repos/
+!src/test/resources/test-repos.zip
 *.tar.gz
 *.rar
 
@@ -207,3 +206,4 @@ gradle-app.setting
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 
+/src/test/resources/test-repos/

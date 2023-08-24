@@ -203,28 +203,58 @@ data class ModifiedFile(
             return path?.let { Path(it).name }!!
         }
 
-    // TODO: property language_supported
+    /**
+     * Return whether the language used in the modification can be analyzed by Pydriller.
+     * Languages are derived from the file  extension.
+     * Supported languages are those supported by Lizard.
+     *
+     * @return true iff language of this Modification can be analyzed.
+     */
     val languageSupported: Boolean
         get() = (getReaderFor(filename) != null)
-    // TODO: property nloc
+
+    /**
+     * Calculate the LOC of the file.
+     *
+     * @return LOC of the file
+     */
     val nloc: Int?
         get() {
             _calculateMetrics()
             return _nloc
         }
-    // TODO: property complexity
+
+    /**
+     * Calculate the Cyclomatic Complexity of the file.
+     *
+     * @return Cyclomatic Complexity of the file
+     */
     val complexity: Int?
         get() {
             _calculateMetrics()
             return _complexity
         }
-    // TODO: property token_count
+
+    /**
+     * Calculate the token count of functions.
+     *
+     * @return token count
+     */
     val tokenCount: Int?
         get() {
             _calculateMetrics()
             return _tokenCount
         }
 
+    /**
+     * Returns a dictionary with the added and deleted lines.
+     * The dictionary has 2 keys: "added" and "deleted", each containing the
+     * corresponding added or deleted lines. For both keys, the value is a
+     * list of Tuple (int, str), corresponding to (number of line in the file,
+     * actual line).
+     *
+     * @return Map
+     */
     val diffParsed: Map<String, List<Pair<Int, String>>>
         get() {
             val modifiedLines = mutableMapOf<String, MutableList<Pair<Int, String>>>(
@@ -240,8 +270,8 @@ data class ModifiedFile(
                     countAdditions += 1
 
                     if (line.startsWith("@@")) {
-                        val (delitions, additions) = _getLineNumbers(line)
-                        countDeletions = delitions
+                        val (deletions, additions) = _getLineNumbers(line)
+                        countDeletions = deletions
                         countAdditions = additions
                     }
                     if (line.startsWith("-") && !line.startsWith("---")) {
@@ -275,17 +305,64 @@ data class ModifiedFile(
         return Pair(deleteLineNumber, additionsLineNumber)
     }
 
-    // TODO: property methods
+    /**
+     * Return the list of methods in the file. Every method
+     * contains various information like complexity, loc, name,
+     * number of parameters, etc.
+     *
+     * @return list of methods
+     */
     val methods: MutableList<Method>
         get() {
             _calculateMetrics()
             return _functionList
         }
-    // TODO: property methods_before
+
+    /**
+     * Return the list of methods in the file before the
+     * change happened. Each method will have all specific
+     * info, e.g. complexity, loc, name, etc.
+     *
+     * @return list of methods
+     */
     val methodsBefore: MutableList<Method>
         get() {
-            _calculateMetrics()
+            _calculateMetrics(includeBefore = true)
             return _functionListBefore
+        }
+
+    val changedMethods: List<Method>
+        get() {
+            val newMethods = methods
+            val oldMethods = methodsBefore
+            val added = diffParsed["added"]
+            val deleted = diffParsed["deleted"]
+
+            val methodsChangedNew = mutableSetOf<Method>()
+            if (added != null) {
+                for (x in added){
+                    for (y in newMethods) {
+                        if (y.startLine <= x.first && x.first <= y.endLine){
+                            methodsChangedNew.add(y)
+                        }
+                    }
+                }
+            }
+
+            val methodsChangedOld = mutableSetOf<Method>()
+            if (deleted != null) {
+                for (x in deleted){
+                    for (y in oldMethods) {
+                        if (y.startLine <= x.first && x.first <= y.endLine){
+                            methodsChangedOld.add(y)
+                        }
+                    }
+                }
+            }
+
+            val result = methodsChangedNew.union(methodsChangedOld).toList()
+
+            return result
         }
     // TODO: property changed_methods
     // TODO: property _risk_profile
@@ -296,7 +373,7 @@ data class ModifiedFile(
             return
         }
 
-        if (sourceCode != null && _nloc != null) {
+        if (sourceCode != null && _nloc == null) {
             val analysis = KLizard().analyzeFile.analyzeSourceCode(filename, sourceCode!!)
             _nloc = analysis.nloc
             _complexity = analysis.CCN

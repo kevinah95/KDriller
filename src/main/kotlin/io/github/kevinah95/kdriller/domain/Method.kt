@@ -39,8 +39,15 @@ data class Method @JvmOverloads constructor(val func: FunctionInfo) {
     var length: Int = func.length
     var topNestingLevel: Int = func.topNestingLevel
 
-    override fun equals(other: Any?): Boolean {
-        // TODO: Change this
+    // hashcode is needed to comparison
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
+
+    override fun equals(obj: Any?): Boolean {
+        val other = obj as? Method
+        if (other == null) return false
+        if (name == other.name && parameters.toTypedArray().contentDeepEquals(other.parameters.toTypedArray())) return true
         return false
     }
 

@@ -26,15 +26,58 @@ class TestCommit {
 
     private val testFolder: File = FileUtils.getFile("src", "test", "resources", "test-repos")
 
+    // TODO: repo, test_equal, test_filename, test_metrics_python
+
     @Test
     fun testChangedMethods() {
         val gr = Git(testFolder.resolve("diff").path)
 
-        val mod  = gr.getCommit("ea95227e0fd128aa69c7ab6a8ac485f72251b3ed").modifiedFiles[0]
+        // add a new method
+        var mod  = gr.getCommit("ea95227e0fd128aa69c7ab6a8ac485f72251b3ed").modifiedFiles[0]
 
-        println(mod._complexity)
+        assertEquals(1, mod.changedMethods.size)
+        assertEquals("GitRepository::singleProjectThirdMethod", mod.changedMethods[0].name)
 
-        assertEquals(1, mod.methods.size)
-        assertEquals("GitRepository::singleProjectThirdMethod", mod.methods[0].name)
+        // add 2 new methods
+        mod  = gr.getCommit("d8eb8e80b671246a43c98d97b05f6d1c5ada14fb").modifiedFiles[0]
+
+        assertEquals(2, mod.changedMethods.size)
+
+        // remove one method
+        mod  = gr.getCommit("0c8f9fdec926785198b399a2c49adb5884aa952c").modifiedFiles[0]
+
+        assertEquals(1, mod.changedMethods.size)
+
+        // add and remove one method at different locations
+        mod  = gr.getCommit("d8bb142c5616041b71cbfaa11eeb768d9a1a296e").modifiedFiles[0]
+
+        assertEquals(2, mod.changedMethods.size)
+
+        // add and remove one method at the same location
+        // this is equivalent to replacing a method - although we expect 2 methods
+        mod  = gr.getCommit("9e9473d5ca310b7663e9df93c402302b6b7f24aa").modifiedFiles[0]
+
+        assertEquals(2, mod.changedMethods.size)
+
+        // update a method
+        mod  = gr.getCommit("b267a14e0503fdac36d280422f16360d1f661f12").modifiedFiles[0]
+
+        assertEquals(1, mod.changedMethods.size)
+
+        // update and add a new method
+        mod  = gr.getCommit("2489099dfd90edb99ddc2c82b62524b66c07c687").modifiedFiles[0]
+
+        assertEquals(2, mod.changedMethods.size)
+
+        // update and delete methods
+        mod  = gr.getCommit("5aebeb30e0238543a93e5bed806639481460cd9a").modifiedFiles[0]
+
+        assertEquals(2, mod.changedMethods.size)
+
+        // delete 3 methods (test cleanup - revert the test file to its
+        // initial set of methods)
+        mod  = gr.getCommit("9f6ddc2aac740a257af59a76860590cb8a84c77b").modifiedFiles[0]
+
+        assertEquals(3, mod.changedMethods.size)
     }
 }

@@ -14,8 +14,6 @@ repositories {
 dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-
     // For JGit
     implementation 'org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r'
     implementation 'org.eclipse.jgit:org.eclipse.jgit.archive:6.6.0.202305301015-r'
@@ -39,5 +37,5 @@ test {
 }
 
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain(11)
 }
