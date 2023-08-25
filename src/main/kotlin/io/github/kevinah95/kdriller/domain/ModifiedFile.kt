@@ -53,6 +53,17 @@ data class ModifiedFile(
     var _functionList: MutableList<Method> = mutableListOf()
     var _functionListBefore: MutableList<Method> = mutableListOf()
 
+    /**
+     * Implements hashing similar as Git would do it. Alternatively, if the
+     * object had the hash of th Git Blob, one could use that directly.
+     *
+     * @return int hash
+     */
+    override fun hashCode(): Int {
+        val string = "${changeType.name} $newPath $content"
+        return ObjectId.fromString(string).hashCode()
+    }
+
     val changeType: ModificationType
         get() = _fromChangeToModificationType(cDiff)
 
@@ -136,6 +147,11 @@ data class ModifiedFile(
             }
         }
 
+    /**
+     * Return the total number of added lines in the file.
+     *
+     * @return int lines_added
+     */
     val addedLines: Int
         get() {
             var addedLines = 0
@@ -147,6 +163,11 @@ data class ModifiedFile(
             return addedLines
         }
 
+    /**
+     * Return the total number of deleted lines in the file.
+     *
+     * @return int lines_deleted
+     */
     val deletedLines: Int
         get() {
             var deletedLines = 0
@@ -331,6 +352,13 @@ data class ModifiedFile(
             return _functionListBefore
         }
 
+    /**
+     * Return the list of methods that were changed. This analysis
+     * is more complex because Lizard runs twice: for methods before
+     * and after the change
+     *
+     * @return list of methods
+     */
     val changedMethods: List<Method>
         get() {
             val newMethods = methods
@@ -364,10 +392,43 @@ data class ModifiedFile(
 
             return result
         }
-    // TODO: property changed_methods
-    // TODO: property _risk_profile
-    // TODO: property _delta_risk_profile
-    // TODO: _calculate_metrics
+
+    /**
+     * Return the risk profile of the set of methods, with two bins: risky, or non risky.
+     * The risk profile is a pair (v_low, v_high), where
+     * v_low is the volume of the low risk methods in the list, and
+     * v_high is the volume of the high risk methods in the list.
+     *
+     * @param methods List of methods for which risk profile is to be determined
+     * @param dmm_prop Property indicating the type of risk
+     * @return total risk profile for methods according to property.
+     */
+    fun _riskProfile(methods: List<Method>, dmmProp: DMMProperty): Pair<Int, Int> {
+        val low = methods.filter { it.isLowRisk(dmmProp) }.map { it.nloc }.sum()
+        val high = methods.filter { !it.isLowRisk(dmmProp) }.map { it.nloc }.sum()
+        return Pair(low, high)
+    }
+
+    /**
+     * Return the delta risk profile of this commit, which a pair (dv1, dv2), where
+     * dv1 is the total change in volume (lines of code) of low risk methods, and
+     * dv2 is the total change in volume of the high risk methods.
+     *
+     * @param dmmProp Property indicating the type of risk
+     * @return total delta risk profile for this property.
+     */
+    fun _deltaRiskProfile(dmmProp: DMMProperty): Pair<Int, Int> {
+        assert(languageSupported)
+
+        val pairBefore = _riskProfile(methodsBefore, dmmProp)
+        val pairAfter = _riskProfile(methods, dmmProp)
+        return Pair(pairAfter.first - pairBefore.first, pairAfter.second - pairBefore.second)
+    }
+
+    /**
+     * @param includeBefore either to compute the metrics
+     * for source_code_before, i.e. before the change happened
+     */
     fun _calculateMetrics(includeBefore: Boolean = false) {
         if (!languageSupported) {
             return
