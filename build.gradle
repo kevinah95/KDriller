@@ -12,6 +12,7 @@ repositories {
 }
 
 dependencies {
+    testImplementation "io.mockk:mockk:1.13.7"
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
 
     // For JGit

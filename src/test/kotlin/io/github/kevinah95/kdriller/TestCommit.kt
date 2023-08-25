@@ -17,16 +17,54 @@
 
 package io.github.kevinah95.kdriller
 
+import io.github.kevinah95.kdriller.domain.ModifiedFile
+import io.github.kevinah95.kdriller.utils.Conf
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.junit5.MockKExtension
+import io.mockk.mockkClass
 import org.apache.commons.io.FileUtils
+import org.eclipse.jgit.diff.DiffEntry
+import org.eclipse.jgit.revwalk.RevTree
+import org.junit.jupiter.api.extension.ExtendWith
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
+
+@ExtendWith(MockKExtension::class)
 class TestCommit {
 
     private val testFolder: File = FileUtils.getFile("src", "test", "resources", "test-repos")
 
     // TODO: repo, test_equal, test_filename, test_metrics_python
+
+
+
+    @Test
+    fun testEqual() {
+        val repo = Git(testFolder.resolve("complex_repo").path)
+        val c1 = repo.getCommit("e7d13b0511f8a176284ce4f92ed8c6e8d09c77f2")
+        val c2 = repo.getCommit(c1.parents[0])
+        val c3 = repo.getCommit("a4ece0762e797d2e2dcbd471115108dd6e05ff58")
+
+        assertEquals("a4ece0762e797d2e2dcbd471115108dd6e05ff58", c1.parents[0])
+        assertEquals(c3, c2)
+        assertNotEquals(c1, c3)
+    }
+
+    @Test
+    fun testFilename(@MockK mockedDiff: DiffEntry) {
+        every { mockedDiff.oldPath } returns "dspadini/pydriller/myfile.py"
+        every { mockedDiff.newPath } returns "dspadini/pydriller/mynewfile.py"
+
+        val m1 = ModifiedFile(mockedDiff, "", mockkClass(RevTree::class), "", mockkClass(Conf::class))
+        assertEquals("mynewfile.py", m1.filename)
+
+        assertEquals("dspadini/pydriller/mynewfile.py", m1.newPath)
+        assertEquals("dspadini/pydriller/myfile.py", m1.oldPath)
+    }
 
     @Test
     fun testChangedMethods() {
