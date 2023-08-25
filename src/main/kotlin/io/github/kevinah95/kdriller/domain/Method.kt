@@ -52,10 +52,28 @@ data class Method @JvmOverloads constructor(val func: FunctionInfo) {
         return false
     }
 
+    /**
+     * Threshold used in the Delta Maintainability Model to establish whether a method
+     * is low risk in terms of its size.
+     * The procedure to obtain the threshold is described in the
+     * [PyDriller documentation **Properties**](https://pydriller.readthedocs.io/en/latest/deltamaintainability.html#properties).
+     */
     val UNIT_SIZE_LOW_RISK_THRESHOLD = 15
 
+    /**
+     * Threshold used in the Delta Maintainability Model to establish whether a method
+     * is low risk in terms of its cyclomatic complexity.
+     * The procedure to obtain the threshold is described in the
+     * [PyDriller documentation **Properties**](https://pydriller.readthedocs.io/en/latest/deltamaintainability.html#properties).
+     */
     val UNIT_COMPLEXITY_LOW_RISK_THRESHOLD = 5
 
+    /**
+     * Threshold used in the Delta Maintainability Model to establish whether a method
+     * is low risk in terms of its interface.
+     * The procedure to obtain the threshold is described in the
+     * [PyDriller documentation **Properties**](https://pydriller.readthedocs.io/en/latest/deltamaintainability.html#properties).
+     */
     val UNIT_INTERFACING_LOW_RISK_THRESHOLD = 2
 
     fun isLowRisk(dmmProp: DMMProperty): Boolean {
