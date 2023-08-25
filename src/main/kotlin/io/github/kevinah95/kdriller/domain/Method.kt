@@ -18,6 +18,7 @@
 package io.github.kevinah95.kdriller.domain
 
 import io.github.kevinah95.FunctionInfo
+import java.util.Objects
 
 /**
  * This class represents a method in a class. Contains various information
@@ -41,7 +42,7 @@ data class Method @JvmOverloads constructor(val func: FunctionInfo) {
 
     // hashcode is needed to comparison
     override fun hashCode(): Int {
-        return name.hashCode()
+        return Objects.hash(name, longName, parameters)
     }
 
     override fun equals(obj: Any?): Boolean {
