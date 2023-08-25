@@ -21,21 +21,19 @@ import io.github.kevinah95.kdriller.utils.Conf
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.*
 import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.lib.ObjectLoader
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.AbstractTreeIterator
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.EmptyTreeIterator
-import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.io.DisabledOutputStream
 import java.io.IOException
-import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.name
+import kotlin.math.abs
 
 /**
  * Class representing a Commit. Contains all the important information such
@@ -290,12 +288,146 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
             return branches
         }
 
-    // TODO: dmm_unit_size
-    // TODO: dmm_unit_complexity
-    // TODO: dmm_unit_interfacing
-    // TODO: _delta_maintainability
-    // TODO: _delta_risk_profile
-    // TODO: _good_change_proportion
+    /**
+     * Return the Delta Maintainability Model (DMM) metric value for the unit size property.
+     *
+     * It represents the proportion (between 0.0 and 1.0) of maintainability improving
+     * change, when considering the lengths of the modified methods.
+     *
+     * It rewards (value close to 1.0) modifications to low-risk (small) methods,
+     * or spliting risky (large) ones.
+     * It penalizes (value close to 0.0) working on methods that remain large
+     * or get larger.
+     *
+     * @return The DMM value (between 0.0 and 1.0) for method size in this commit,
+     * or None if none of the programming languages in the commit are supported.
+     */
+    val dmmUnitSize: Double?
+        get() {
+            return _deltaMaintainability(DMMProperty.UNIT_SIZE)
+        }
+
+    /**
+     * Return the Delta Maintainability Model (DMM) metric value for the unit complexity property.
+     *
+     * It represents the proportion (between 0.0 and 1.0) of maintainability improving
+     * change, when considering the cyclomatic complexity of the modified methods.
+     *
+     * It rewards (value close to 1.0) modifications to low-risk (low complexity) methods,
+     * or spliting risky (highly complex) ones.
+     * It penalizes (value close to 0.0) working on methods that remain complex
+     * or get more complex.
+     *
+     * @return The DMM value (between 0.0 and 1.0) for method complexity in this commit.
+     * or None if none of the programming languages in the commit are supported.
+     */
+    val dmmUnitComplexity: Double?
+        get() {
+            return _deltaMaintainability(DMMProperty.UNIT_COMPLEXITY)
+        }
+
+    /**
+     * Return the Delta Maintainability Model (DMM) metric value for the unit interfacing property.
+     *
+     * It represents the proportion (between 0.0 and 1.0) of maintainability improving
+     * change, when considering the interface (number of parameters) of the modified methods.
+     *
+     * It rewards (value close to 1.0) modifications to low-risk (with  few parameters) methods,
+     * or spliting risky (with many parameters) ones.
+     * It penalizes (value close to 0.0) working on methods that continue to have
+     * or are extended with too many parameters.
+     *
+     * @return The dmm value (between 0.0 and 1.0) for method interfacing in this commit.
+     * or None if none of the programming languages in the commit are supported.
+     */
+    val dmmUnitInterfacing: Double?
+        get() {
+            return _deltaMaintainability(DMMProperty.UNIT_INTERFACING)
+        }
+
+    /**
+     * Compute the Delta Maintainability Model (DMM) value for the given risk predicate.
+     * The DMM value is computed as the proportion of good change in the commit:
+     * Good changes: Adding low risk code or removing high risk codee.
+     * Bad changes: Adding high risk code or removing low risk code.
+     *
+     * @param dmmProp Property indicating the type of risk
+     * @return dmm value (between 0.0 and 1.0) for the property represented in the property.
+     */
+    fun _deltaMaintainability(dmmProp: DMMProperty): Double? {
+        val deltaProfile = _deltaRiskProfile(dmmProp)
+        if (deltaProfile != null) {
+            val (deltaLow, deltaHigh) = deltaProfile
+            return _goodChangeProportion(deltaLow, deltaHigh)
+        }
+        return null
+    }
+
+    /**
+     * Return the delta risk profile of this commit, which a pair (dv1, dv2), where
+     * dv1 is the total change in volume (lines of code) of low risk methods, and
+     * dv2 is the total change in volume of the high risk methods.
+     *
+     * @param dmmProp Property indicating the type of risk
+     * @return total delta risk profile for this commit.
+     */
+    fun _deltaRiskProfile(dmmProp: DMMProperty): Pair<Int, Int>? {
+        val supportedModifications = modifiedFiles.filter { it.languageSupported }
+
+        if (supportedModifications.isNotEmpty()) {
+            val deltas = supportedModifications.map { it._deltaRiskProfile(dmmProp) }
+
+            val deltaLow = deltas.sumOf { it.first }
+            val deltaHigh = deltas.sumOf { it.second }
+            return Pair(deltaLow, deltaHigh)
+        }
+
+        return null
+    }
+
+
+    companion object {
+
+        /**
+         * Given a delta risk profile, compute the proportion of "good" change in the total change.
+         * Increasing low risk code, or decreasing high risk code, is considered good.
+         * Other types of changes are considered not good.
+         *
+         * @return proportion of good change in total change, or None if the total change is zero.
+         */
+        @JvmStatic
+        fun _goodChangeProportion(lowRiskDelta: Int, highRiskDelta: Int): Double? {
+            var (badChange, goodChange) = Pair(0, 0)
+
+            if (lowRiskDelta >= 0){
+                goodChange = lowRiskDelta
+            } else {
+                badChange = abs(lowRiskDelta)
+            }
+
+            if (highRiskDelta >= 0){
+                badChange += highRiskDelta
+            } else {
+                goodChange += abs(highRiskDelta)
+            }
+
+            assert(goodChange >= 0 && badChange >= 0)
+
+            val totalChange = goodChange + badChange
+
+            var proportion: Double? = null
+            if (totalChange == 0){
+                proportion = null
+            } else {
+                proportion = goodChange.toDouble() / totalChange
+                assert(0.0 <= proportion && proportion <= 1.0)
+            }
+
+            return proportion
+        }
+    }
+
+
 
     val diffEntries: List<DiffEntry>?
         get() {
