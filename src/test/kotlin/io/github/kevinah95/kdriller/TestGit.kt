@@ -377,52 +377,89 @@ internal class TestGit {
         }
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesSimple line[344]
     @Test
     fun testGetCommitsLastModifiedLinesSimple() {
-        //val repo = Git(testFolder.resolve("szz").path)
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("e6d3b38a9ef683e8184eac10a0471075c2808bbd"))
+
+        assertEquals(1, buggyCommits.size)
+
+        assertTrue(buggyCommits["B.java"]?.contains("540c7f31c18664a38190fafb6721b5174ff4a166") == true )
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesMultiple line[353]
     @Test
     fun testGetCommitsLastModifiedLinesMultiple() {
-        //val repo = Git(testFolder.resolve("szz").path)
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("9942ee9dcdd1103e5808d544a84e6bc8cade0e54"))
+
+        assertEquals(1, buggyCommits.size)
+
+        assertTrue(buggyCommits["A.java"]?.contains("2eb905e5e7be414fd184d6b4f1571b142621f4de") == true )
+        assertTrue(buggyCommits["A.java"]?.contains("20a40688521c1802569e60f9d55342c3bfdd772c") == true )
+        assertTrue(buggyCommits["A.java"]?.contains("22505e97dca6f843549b3a484b3609be4e3acf17") == true )
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesRenameAndFix line[366]
     @Test
     fun testGetCommitsLastModifiedLinesRenameAndFix() {
-        //val repo = Git(testFolder.resolve("szz").path)
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("4e287ab8e6dba110219404fb8a43993f3dda674c"))
+
+        assertEquals(1, buggyCommits.size)
+
+        assertTrue(buggyCommits["H.java"]?.contains("06b9ff31cd3475d9fd9ef668cc0844ab169da726") == true )
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesRename line[375]
     @Test
     fun testGetCommitsLastModifiedLinesRename() {
-        //val repo = Git(testFolder.resolve("szz").path)
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("2f2d0dec7cd06de4c2ed11ed010727a54af8ebf8"))
+
+        assertEquals(1, buggyCommits.size)
+
+        assertTrue(buggyCommits["myfolder/Z.java"]?.contains("00e61714fd76ff110d8da953aa1179809591f5aa") == true )
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesUselessLines line[384]
     @Test
     fun testGetCommitsLastModifiedLinesUselessLines() {
-        //val repo = Git(testFolder.resolve("szz").path)
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("3bc7295c16b7dfc15d5f82eb6962a2774e1b8420"))
+
+        assertEquals(1, buggyCommits.size)
+        assertTrue(buggyCommits["H.java"]?.contains("c7fc2e870ce03b0b8dc29ed0eeb26d14e235ea3b") == true )
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesUselessLines2 line[392]
     @Test
     fun testGetCommitsLastModifiedLinesUselessLines2() {
-        //val repo = Git(testFolder.resolve("szz").path)
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("4155c421ee5cbb3c34feee7b68aa78a2ee1bbeae"))
+
+        assertEquals(0, buggyCommits.size)
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesForSingleFile line[398]
     @Test
     fun testGetCommitsLastModifiedLinesForSingleFile() {
-        //val repo = Git(testFolder.resolve("szz").path)
+        val repo = Git(testFolder.resolve("szz").path)
+        val commit = repo.getCommit("0f726924f96621e4965039123098ba83e39ffba6")
+        var buggyCommits: MutableMap<String, MutableSet<String>>? = null
+        for(mod in commit.modifiedFiles){
+            if (mod.filename == "A.java"){
+                buggyCommits = repo.getCommitsLastModifiedLines(commit, mod)
+            }
+        }
+
+        assertNotNull(buggyCommits)
+        assertEquals(1, buggyCommits.size)
+        assertTrue(buggyCommits["A.java"]?.contains("e2ed043eb96c05ebde653a44ae733ded9ef90750") == true )
+        assertEquals(1, buggyCommits["A.java"]?.size)
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesWithMoreModification line[412]
     @Test
     fun testGetCommitsLastModifiedLinesWithMoreModification() {
-        //val repo = Git(testFolder.resolve("szz").path)
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("c7002fb321a8ba32a28fac200538f7c2ba76f175"))
+
+        assertEquals(1, buggyCommits.size)
+        assertTrue(buggyCommits["A.java"]?.contains("5cb9e9ae44a0949ec91d06a955975289be766f34") == true )
     }
 
 
@@ -464,28 +501,35 @@ internal class TestGit {
         assertEquals(0, taggedCommits.size)
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesWithMoreModification line[454]
     @Test
     fun testGetCommitsLastModifiedLinesHyperBlame() {
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("e6d3b38a9ef683e8184eac10a0471075c2808bbd"))
 
+        assertEquals(1, buggyCommits.size)
+        assertTrue(buggyCommits["B.java"]?.contains("540c7f31c18664a38190fafb6721b5174ff4a166") == true )
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesHyperBlameUnblamable line[466]
     @Test
+    @Ignore("Not supported yet by jgit see: https://bugs.eclipse.org/bugs/show_bug.cgi?id=559671")
     fun testGetCommitsLastModifiedLinesHyperBlameUnblamable() {
 
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesHyperBlameIgnoreHash line[480]
     @Test
+    @Ignore("Not supported yet by jgit see: https://bugs.eclipse.org/bugs/show_bug.cgi?id=559671")
     fun testGetCommitsLastModifiedLinesHyperBlameIgnoreHash() {
 
     }
 
-    // TODO: implement testGetCommitsLastModifiedLinesHyperBlameWithRenaming line[494]
     @Test
     fun testGetCommitsLastModifiedLinesHyperBlameWithRenaming() {
+        val repo = Git(testFolder.resolve("szz").path)
+        val buggyCommits = repo.getCommitsLastModifiedLines(repo.getCommit("be0772cbaa2eba32bf97aae885199d1a357ddc93"))
 
+        assertEquals(2, buggyCommits.size)
+        assertTrue(buggyCommits["A.java"]?.contains("9568d20856728304ab0b4d2d02fb9e81d0e5156d") == true )
+        assertTrue(buggyCommits["H.java"]?.contains("9568d20856728304ab0b4d2d02fb9e81d0e5156d") == true )
     }
 
 }

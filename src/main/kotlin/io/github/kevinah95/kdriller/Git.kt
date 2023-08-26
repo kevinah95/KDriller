@@ -22,9 +22,13 @@ package io.github.kevinah95.kdriller
  */
 
 import io.github.kevinah95.kdriller.domain.Commit
+import io.github.kevinah95.kdriller.domain.ModificationType
+import io.github.kevinah95.kdriller.domain.ModifiedFile
 import io.github.kevinah95.kdriller.utils.Conf
 import mu.KotlinLogging
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.blame.BlameResult
+import org.eclipse.jgit.diff.RawTextComparator
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
@@ -283,7 +287,85 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
         return tags
     }
 
-    // TODO: get_commits_last_modified_lines
+    fun getCommitsLastModifiedLines(commit: Commit, modification: ModifiedFile? = null, hashesToIgnorePath: String? = null): MutableMap<String, MutableSet<String>> {
+        val modifications = if (modification != null) {
+            listOf(modification)
+        } else {
+            commit.modifiedFiles
+        }
+
+        return _calculateLastCommits(commit, modifications, hashesToIgnorePath)
+    }
+
+    fun _calculateLastCommits(commit: Commit, modifications: List<ModifiedFile>, hashesToIgnorePath: String? = null): MutableMap<String, MutableSet<String>> {
+        var commits: MutableMap<String, MutableSet<String>> = mutableMapOf<String, MutableSet<String>>().withDefault { mutableSetOf() }
+
+        for (mod in modifications){
+            var path = mod.newPath
+            if (mod.changeType == ModificationType.RENAME || mod.changeType == ModificationType.DELETE) {
+                path = mod.oldPath
+            }
+
+            val deletedLines = mod.diffParsed["deleted"]
+
+            assert(path != null)
+
+            try {
+                val blame = _getBlame(commit.cObject.name, path!!, hashesToIgnorePath)
+
+                if (deletedLines != null) {
+                    for ((numLine, line) in deletedLines){
+                        if (!_uselessLine(line.trim())) {
+                            val buggyCommit = blame?.getSourceCommit(numLine - 1)
+                            val buggyLine = blame?.resultContents?.getString(numLine - 1)
+
+                            // Skip unblamable lines.
+                            if (buggyLine?.startsWith("*") == true) {
+                                continue
+                            }
+
+                            if (mod.changeType == ModificationType.RENAME){
+                                path = mod.newPath
+                            }
+
+                            assert(path != null)
+
+
+                            val set = commits.getOrDefault(path, mutableSetOf())
+                            if (path != null) {
+                                set.add(buggyCommit?.name!!)
+                                commits[path] = set
+                            }
+                        }
+                    }
+                }
+
+            } catch (e: Exception) {
+                logger.debug("Could not found file ${mod.filename} in commit ${commit.hash}. Probably a double rename!")
+            }
+        }
+        return commits
+    }
+
+    fun _getBlame(commitHash: String, path: String, hashesToIgnorePath: String? = null): BlameResult? {
+        if (hashesToIgnorePath != null) {
+            throw NotImplementedError("Not supported yet by jgit see: https://bugs.eclipse.org/bugs/show_bug.cgi?id=559671")
+        }
+        Git(repo).use { git ->
+            val parentCommit = repo?.resolve("$commitHash^")
+            return git.blame().setStartCommit(parentCommit).setFilePath(path).setTextComparator(RawTextComparator.WS_IGNORE_ALL).call()
+        }
+    }
+
+    fun _uselessLine(line: String): Boolean {
+        return (line.isBlank()) ||
+                line.startsWith("//") ||
+                line.startsWith("#") ||
+                line.startsWith("/*") ||
+                line.startsWith("'''") ||
+                line.startsWith("\"\"\"") ||
+                line.startsWith("*") 
+    }
 
 
     // TODO: implement includeDeletedFiles
