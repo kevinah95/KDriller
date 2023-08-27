@@ -110,9 +110,17 @@ data class Conf(val options: Map<String, Any?>) {
 
         @JvmStatic
         fun _replaceTimezone(dt: Date): Date {
-            val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-            cal.time = dt
-            return cal.time
+            var newDt = dt
+            val timeZoneUTC = TimeZone.getTimeZone("UTC")
+
+            val offset = timeZoneUTC.getOffset(dt.time)
+            if (offset != 0 ){
+                val cal = Calendar.getInstance(timeZoneUTC)
+                cal.timeInMillis = dt.time
+                newDt = cal.time
+            }
+
+             return newDt
         }
 
     }
@@ -295,12 +303,14 @@ data class Conf(val options: Map<String, Any?>) {
             rev.add(RevFilter.NO_MERGES)
         }
 
-        when (order) {
+        val revSort = when (order) {
             null -> RevSort.NONE
             "reverse" -> RevSort.REVERSE
             "topo-order" -> RevSort.TOPO
             "date-order" -> RevSort.COMMIT_TIME_DESC
+            else -> RevSort.NONE
         }
+
 
         if (includeRefs != null) {
             // TODO: remove this rev.add(RevFilter.ALL) and use RefDatabase.ALL

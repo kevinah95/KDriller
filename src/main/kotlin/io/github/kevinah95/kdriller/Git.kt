@@ -147,7 +147,16 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
      * @return the generator of all the commits in the repo
      */
     fun getListCommits(rev: String = Constants.HEAD, revFilter: List<RevFilter> = listOf()) = sequence<Commit> {
-        var revSort = RevSort.REVERSE
+        val order = _conf.get("order")
+
+        var revSort = when (order) {
+            null -> RevSort.REVERSE
+            "reverse" -> RevSort.REVERSE
+            "topo-order" -> RevSort.TOPO
+            "date-order" -> RevSort.COMMIT_TIME_DESC
+            else -> RevSort.REVERSE
+        }
+
         if (_conf.get("reverse") != null) {
             revSort = RevSort.NONE
         }
@@ -158,18 +167,21 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
             repo?.exactRef(rev)?.objectId!!
         }
 
-        RevWalk(repo).use { walk ->
-            if (revFilter.size == 1)
-                walk.revFilter = revFilter[0];
-            else if (revFilter.size > 1)
-                walk.revFilter = AndRevFilter.create(revFilter)
-            val commit = walk.parseCommit(revId)
-            walk.markStart(commit)
-            walk.sort(revSort, true) // We can extend multiple sorts
-            for (revCommit in walk) {
-                yield(getCommitFromJGit(revCommit))
+        RevWalk(repo)
+            .use { walk ->
+
+                if (revFilter.size == 1)
+                    walk.revFilter = revFilter[0];
+                else if (revFilter.size > 1)
+                    walk.revFilter = AndRevFilter.create(revFilter)
+                walk.sort(revSort, true) // We can extend multiple sorts
+
+                val commit = walk.parseCommit(revId)
+                walk.markStart(commit)
+                for (revCommit in walk) {
+                    yield(getCommitFromJGit(revCommit))
+                }
             }
-        }
     }
 
     /**
@@ -203,7 +215,7 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
      *
      * @param [_hash] commit hash to checkout
      */
-    fun checkout(_hash: String){
+    fun checkout(_hash: String) {
         Git.open(path.toFile()).use { git ->
             git.checkout().setForced(true).setName(_hash).call()
             git.clean()
@@ -228,7 +240,7 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
      * discarding local changes (-f option).
      *
      */
-    fun reset(){
+    fun reset() {
         Git.open(path.toFile()).use { git ->
             git.checkout().setForced(true).setName(_conf.get("main_branch") as String).call()
         }
@@ -287,7 +299,11 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
         return tags
     }
 
-    fun getCommitsLastModifiedLines(commit: Commit, modification: ModifiedFile? = null, hashesToIgnorePath: String? = null): MutableMap<String, MutableSet<String>> {
+    fun getCommitsLastModifiedLines(
+        commit: Commit,
+        modification: ModifiedFile? = null,
+        hashesToIgnorePath: String? = null
+    ): MutableMap<String, MutableSet<String>> {
         val modifications = if (modification != null) {
             listOf(modification)
         } else {
@@ -297,10 +313,15 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
         return _calculateLastCommits(commit, modifications, hashesToIgnorePath)
     }
 
-    fun _calculateLastCommits(commit: Commit, modifications: List<ModifiedFile>, hashesToIgnorePath: String? = null): MutableMap<String, MutableSet<String>> {
-        var commits: MutableMap<String, MutableSet<String>> = mutableMapOf<String, MutableSet<String>>().withDefault { mutableSetOf() }
+    fun _calculateLastCommits(
+        commit: Commit,
+        modifications: List<ModifiedFile>,
+        hashesToIgnorePath: String? = null
+    ): MutableMap<String, MutableSet<String>> {
+        var commits: MutableMap<String, MutableSet<String>> =
+            mutableMapOf<String, MutableSet<String>>().withDefault { mutableSetOf() }
 
-        for (mod in modifications){
+        for (mod in modifications) {
             var path = mod.newPath
             if (mod.changeType == ModificationType.RENAME || mod.changeType == ModificationType.DELETE) {
                 path = mod.oldPath
@@ -314,7 +335,7 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
                 val blame = _getBlame(commit.cObject.name, path!!, hashesToIgnorePath)
 
                 if (deletedLines != null) {
-                    for ((numLine, line) in deletedLines){
+                    for ((numLine, line) in deletedLines) {
                         if (!_uselessLine(line.trim())) {
                             val buggyCommit = blame?.getSourceCommit(numLine - 1)
                             val buggyLine = blame?.resultContents?.getString(numLine - 1)
@@ -324,7 +345,7 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
                                 continue
                             }
 
-                            if (mod.changeType == ModificationType.RENAME){
+                            if (mod.changeType == ModificationType.RENAME) {
                                 path = mod.newPath
                             }
 
@@ -353,7 +374,8 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
         }
         Git(repo).use { git ->
             val parentCommit = repo?.resolve("$commitHash^")
-            return git.blame().setStartCommit(parentCommit).setFilePath(path).setTextComparator(RawTextComparator.WS_IGNORE_ALL).call()
+            return git.blame().setStartCommit(parentCommit).setFilePath(path)
+                .setTextComparator(RawTextComparator.WS_IGNORE_ALL).call()
         }
     }
 
@@ -364,7 +386,7 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
                 line.startsWith("/*") ||
                 line.startsWith("'''") ||
                 line.startsWith("\"\"\"") ||
-                line.startsWith("*") 
+                line.startsWith("*")
     }
 
 
