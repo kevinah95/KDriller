@@ -58,9 +58,6 @@ class TestBetweenDates {
 
     @Test
     fun testBetweenDatesWithoutTimezone() {
-
-        val zoned1 = ZonedDateTime.of(2016, 10, 8, 21, 0, 0, 0, null)
-
         val pathToRepo = listOf(testFolder.resolve("different_files").path)
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         //val cal = Calendar.getInstance()
