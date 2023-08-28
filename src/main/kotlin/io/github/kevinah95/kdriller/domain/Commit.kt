@@ -464,7 +464,9 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
             MyersDiff.INSTANCE
         }
 
-        val rawTextComparator = if (conf.get("skip_whitespaces")!= null && conf.get("skip_whitespaces") as Boolean) {
+        val skipWhitespaces = conf.get("skip_whitespaces") as Boolean?
+
+        val rawTextComparator = if (skipWhitespaces != null && skipWhitespaces) {
             RawTextComparator.WS_IGNORE_ALL
         } else {
             RawTextComparator.DEFAULT
@@ -478,15 +480,20 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
                 diffFormatter.setDiffComparator(rawTextComparator)
                 diffFormatter.isDetectRenames = true
                 val diffEntries = diffFormatter.scan(oldTreeIterator, newTreeIterator)
-                val result = mutableListOf<DiffEntry>()
-                for (diffEntry in diffEntries){
-                    diffFormatter.format(diffEntry)
-                    val changes = out.toString("UTF-8")
-                    if (changes.lines().size > 5) { // This line skip the diffs that contains only header
-                        result.add(diffEntry)
+                var result = mutableListOf<DiffEntry>()
+                if (skipWhitespaces != null && skipWhitespaces) {
+                    for (diffEntry in diffEntries){
+                        diffFormatter.format(diffEntry)
+                        val changes = out.toString("UTF-8")
+                        if (changes.lines().size > 5) { // This line skip the diffs that contains only header
+                            result.add(diffEntry)
+                        }
+                        out.flush()
                     }
-                    out.flush()
+                } else {
+                    result = diffEntries
                 }
+
                 return result
             }
         }

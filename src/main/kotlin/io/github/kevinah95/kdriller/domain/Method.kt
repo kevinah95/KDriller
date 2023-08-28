@@ -45,9 +45,8 @@ data class Method @JvmOverloads constructor(val func: FunctionInfo) {
         return Objects.hash(name, longName, parameters)
     }
 
-    override fun equals(obj: Any?): Boolean {
-        val other = obj as? Method
-        if (other == null) return false
+    override fun equals(other: Any?): Boolean {
+        if (other !is Method) return false
         if (name == other.name && parameters.toTypedArray().contentDeepEquals(other.parameters.toTypedArray())) return true
         return false
     }
