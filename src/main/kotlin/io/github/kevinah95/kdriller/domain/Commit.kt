@@ -28,6 +28,7 @@ import org.eclipse.jgit.treewalk.AbstractTreeIterator
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.EmptyTreeIterator
 import org.eclipse.jgit.util.io.DisabledOutputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.*
 import kotlin.io.path.Path
@@ -470,13 +471,23 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
         }
 
         Git.open(Path(projectPath).resolve(".git").toFile()).use { git ->
-            DiffFormatter(DisabledOutputStream.INSTANCE).use { diffFormatter ->
+            val out = ByteArrayOutputStream()
+            DiffFormatter(out).use { diffFormatter ->
                 diffFormatter.setRepository(git.repository)
                 diffFormatter.setDiffAlgorithm(diffAlgorithm)
                 diffFormatter.setDiffComparator(rawTextComparator)
                 diffFormatter.isDetectRenames = true
-                return diffFormatter.scan(oldTreeIterator, newTreeIterator)
-
+                val diffEntries = diffFormatter.scan(oldTreeIterator, newTreeIterator)
+                val result = mutableListOf<DiffEntry>()
+                for (diffEntry in diffEntries){
+                    diffFormatter.format(diffEntry)
+                    val changes = out.toString("UTF-8")
+                    if (changes.lines().size > 5) { // This line skip the diffs that contains only header
+                        result.add(diffEntry)
+                    }
+                    out.flush()
+                }
+                return result
             }
         }
     }
