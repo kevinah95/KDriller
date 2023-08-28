@@ -416,7 +416,7 @@ data class Commit(@JvmField val commit: RevCommit, private val conf: Conf) {
 
             val totalChange = goodChange + badChange
 
-            var proportion: Double? = null
+            var proportion: Double? = 0.0
             if (totalChange == 0){
                 proportion = null
             } else {
