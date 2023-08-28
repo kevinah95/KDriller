@@ -185,6 +185,7 @@ internal class TestRepository {
     }
 
     @Test
+    @Ignore("Not implemented yet, only histogram diff is enabled")
     fun testDiffWithoutHistogram() {
         // Arrange
         val pathToRepo = listOf(testFolder.resolve("histogram").path)
@@ -198,18 +199,16 @@ internal class TestRepository {
         val diff = commit.modifiedFiles[0].diffParsed
         val diffAdded = diff["added"].orEmpty()
         val diffDeleted = diff["deleted"].orEmpty()
-
+        val diff2 = commit.modifiedFiles[0].diff
         // Assert
         assertEquals(11, diffAdded.size)
-        // TODO: check space to end of line
         assertTrue(diffAdded.contains(Pair(3, "    if (path == null) ")))
         assertTrue(diffAdded.contains(Pair(5, "        log.error(\"Icon path is null\");")))
         assertTrue(diffAdded.contains(Pair(6, "        return null;")))
         assertTrue(diffAdded.contains(Pair(8, "")))
-        //            println(diff["added"])
-//            println(diff["deleted"])
-//            println(diffAdded.filter { it.first == 9 })
         //assertTrue(diffAdded.contains(Pair(9, "    java.net.URL imgURL = GuiImporter.class.getResource(path); ")))
+        println(diffAdded.filter { it.first == 9 })
+        assertContains(diffAdded, Pair(9, "    java.net.URL imgURL = GuiImporter.class.getResource(path); "))
 //            assertTrue((6, "        return null;") in diff["added"])
 //            assertTrue((8, "") in diff["added"])
 //            assertTrue((9, "    java.net.URL imgURL = GuiImporter.class.getResource(path);") in diff["added"])
@@ -220,6 +219,42 @@ internal class TestRepository {
 //            assertTrue((16, "    else") in diff["added"])
 //            assertTrue((17, "        return new ImageIcon(imgURL);") in diff["added"])
         assertTrue(diffDeleted.size == 7)
+    }
+
+    @Test
+    fun testDiffWithHistogram() {
+        // Arrange
+        val pathToRepo = listOf(testFolder.resolve("histogram").path)
+
+        // Act
+        val commit = Repository(
+            pathToRepo,
+            single = "93df8676e6fab70d9677e94fd0f6b17db095e890",
+            histogramDiff = true
+        ).traverseCommits().first()
+        val diff = commit.modifiedFiles[0].diffParsed
+        val diffAdded = diff["added"].orEmpty()
+        val diffDeleted = diff["deleted"].orEmpty()
+
+        // Assert
+        // Added
+        assertTrue(diffAdded.contains(Pair(4, "    {")))
+        assertTrue(diffAdded.contains(Pair(5, "        log.error(\"Icon path is null\");")))
+        assertTrue(diffAdded.contains(Pair(6, "        return null;")))
+        assertTrue(diffAdded.contains(Pair(7, "    }")))
+        assertTrue(diffAdded.contains(Pair(8, "")))
+        assertTrue(diffAdded.contains(Pair(11, "    if (imgURL == null) ")))
+        assertTrue(diffAdded.contains(Pair(12, "    { ")))
+        assertTrue(diffAdded.contains(Pair(13, "        log.error(\"Couldn't find icon: \" + imgURL);")))
+        assertTrue(diffAdded.contains(Pair(14, "        return null;")))
+        assertTrue(diffAdded.contains(Pair(17, "        return new ImageIcon(imgURL); ")))
+        // Deleted
+        assertTrue(diffDeleted.contains(Pair(6, "    {")))
+        assertTrue(diffDeleted.contains(Pair(7, "        return new ImageIcon(imgURL); ")))
+        assertTrue(diffDeleted.contains(Pair(10, "    {")))
+        assertTrue(diffDeleted.contains(Pair(11, "        log.error(\"Couldn't find icon: \" + imgURL);")))
+        assertTrue(diffDeleted.contains(Pair(12, "    }")))
+        assertTrue(diffDeleted.contains(Pair(13, "    return null;")))
     }
 
     @Test

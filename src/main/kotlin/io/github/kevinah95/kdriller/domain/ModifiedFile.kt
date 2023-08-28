@@ -94,9 +94,9 @@ data class ModifiedFile(
                     DiffFormatter(output).use { df ->
                         // TODO: Improve this:
                         val diffAlgorithm = if (conf.get("histogram") != null && conf.get("histogram") as Boolean) {
-                            HistogramDiff()
+                            DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
                         } else {
-                            MyersDiff.INSTANCE
+                            DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.MYERS)
                         }
 
                         val rawTextComparator =
