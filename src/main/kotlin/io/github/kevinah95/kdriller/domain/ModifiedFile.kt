@@ -119,12 +119,12 @@ data class ModifiedFile(
 
     val content: ByteArray?
         get() {
-            return _getCommitContent(cDiff.newPath)
+            return newPath?.let { _getCommitContent(it) }
         }
 
     val contentBefore: ByteArray?
         get() {
-            return _getCommitContent(cDiff.newPath, true)
+            return newPath?.let { _getCommitContent(it, true) }
         }
 
     val sourceCode: String?

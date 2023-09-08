@@ -42,6 +42,10 @@ import org.eclipse.jgit.api.Git as Repo
 
 private val logger = KotlinLogging.logger {}
 
+// TODO: Change builder to typesafe builder (Kotlin DSL)
+// See:
+// https://medium.com/mindorks/builder-pattern-vs-kotlin-dsl-c3ebaca6bc3b
+// https://marketsplash.com/tutorials/kotlin/kotlin-dsl/
 /**
  * This is the main class of KDriller, responsible for running the study.
  *
