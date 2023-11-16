@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import com.github.kevinah95.kdriller.Configuration
+import io.github.kevinah95.kdriller.Configuration
 
 rootProject.extra.apply {
     val snapshot = System.getenv("SNAPSHOT").toBoolean()
