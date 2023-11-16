@@ -1,4 +1,4 @@
-import com.github.kevinah95.kdriller.Configuration
+import io.github.kevinah95.kdriller.Configuration
 
 plugins {
     kotlin("jvm") version "1.9.0"
