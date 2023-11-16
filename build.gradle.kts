@@ -16,7 +16,6 @@ mavenPublishing {
 }
 
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
@@ -40,7 +39,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.8")
 
     // Analyzer
-    implementation("io.github.kevinah95:KLizard:0.1.0")
+    implementation("io.github.kevinah95:klizard:0.1.0")
 }
 
 tasks.test {

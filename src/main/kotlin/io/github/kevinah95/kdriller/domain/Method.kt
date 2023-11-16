@@ -17,7 +17,7 @@
 
 package io.github.kevinah95.kdriller.domain
 
-import io.github.kevinah95.FunctionInfo
+import io.github.kevinah95.klizard.FunctionInfo
 import java.util.Objects
 
 /**

@@ -17,9 +17,9 @@
 
 package io.github.kevinah95.kdriller.domain
 
-import io.github.kevinah95.KLizard
+import io.github.kevinah95.klizard.KLizard
 import io.github.kevinah95.kdriller.utils.Conf
-import io.github.kevinah95.klizard_languages.getReaderFor
+import io.github.kevinah95.klizard.klizard_languages.getReaderFor
 import mu.KotlinLogging
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.diff.*
