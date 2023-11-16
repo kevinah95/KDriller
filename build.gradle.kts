@@ -6,6 +6,15 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.25.3"
 }
 
+apply(from = "${rootDir}/scripts/publish-module.gradle.kts")
+
+mavenPublishing {
+    pom {
+        version = rootProject.extra.get("libVersion").toString()
+        group = Configuration.artifactGroup
+    }
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
