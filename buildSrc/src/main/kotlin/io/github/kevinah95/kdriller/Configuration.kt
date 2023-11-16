@@ -19,8 +19,8 @@ package com.github.kevinah95.kdriller
 
 object Configuration {
     const val majorVersion = 0 // x-release-please-major
-    const val minorVersion = 6 // x-release-please-minor
-    const val patchVersion = 1 // x-release-please-patch
+    const val minorVersion = 7 // x-release-please-minor
+    const val patchVersion = 0 // x-release-please-patch
     const val versionName = "$majorVersion.$minorVersion.$patchVersion"
     const val snapshotVersionName = "$majorVersion.$minorVersion.${patchVersion + 1}-SNAPSHOT"
     const val artifactGroup = "com.github.kevinah95"
