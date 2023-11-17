@@ -24,6 +24,7 @@ jobs:
         if: ${{ steps.release.outputs.releases_created }}
   publish:
     runs-on: macos-latest
+    needs: release
     if: ${{ needs.release.outputs.releases_created }}
     steps:
       - name: Check out code
