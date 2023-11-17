@@ -9,9 +9,18 @@ plugins {
 apply(from = "${rootDir}/scripts/publish-module.gradle.kts")
 
 mavenPublishing {
+    val artifactId = "kdriller"
+    coordinates(
+        Configuration.artifactGroup,
+        artifactId,
+        rootProject.extra.get("libVersion").toString()
+    )
+
     pom {
-        version = rootProject.extra.get("libVersion").toString()
-        group = Configuration.artifactGroup
+        name.set(artifactId)
+        description.set(
+            "Kotlin Framework to analyse Git repositories"
+        )
     }
 }
 
