@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0](https://github.com/kevinah95/KDriller/compare/v0.1.5...v0.1.0) (2023-11-17)
+
+
+### Documentation
+
+* Update version 0.1.0 in Maven ([13c4471](https://github.com/kevinah95/KDriller/commit/13c4471f77232d99b03279e195e3c117b4cde497))
+
+
+### Miscellaneous Chores
+
+* **main:** release 0.1.0 ([cd19f5b](https://github.com/kevinah95/KDriller/commit/cd19f5bf49e52d281f6a76f6d38ccac1becfed93))
+
+
+### Continuous Integration
+
+* Add main ref ([86eea89](https://github.com/kevinah95/KDriller/commit/86eea89783b624ce3f0f228f4df378479d021457))
+* Add octocat username ([c6f2392](https://github.com/kevinah95/KDriller/commit/c6f2392d5aeba8ec6dcfed2d1230885150a518bf))
+
 ## [0.1.5](https://github.com/kevinah95/KDriller/compare/v0.1.1...v0.1.5) (2023-11-17)
 
 
