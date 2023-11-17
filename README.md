@@ -1,7 +1,7 @@
 # KDriller
 
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://img.shields.io/maven-central/v/io.github.kevinah95/kdriller/0.1.6)](https://central.sonatype.com/artifact/io.github.kevinah95/kdriller) <!--- x-release-please-version -->
+[![Download](https://img.shields.io/maven-central/v/io.github.kevinah95/kdriller/0.1.7-SNAPSHOT)](https://central.sonatype.com/artifact/io.github.kevinah95/kdriller) <!--- x-release-please-version -->
 [![Kotlin](https://img.shields.io/badge/kotlin-1.9.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
 
 KDriller is a Kotlin framework that helps developers in analyzing Git repositories. With KDriller you can easily extract information about **commits**, **developers**, **modified files**, **diffs**, and **source code**. 
