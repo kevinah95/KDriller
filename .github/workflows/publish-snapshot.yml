@@ -1,13 +1,16 @@
 name: Publish Snapshot builds
 
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - main
   workflow_dispatch:
 
 jobs:
   publish:
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'snapshot') }}
     name: Snapshot build and publish
     runs-on: macos-latest
     steps:
