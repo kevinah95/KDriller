@@ -1,4 +1,4 @@
-import io.github.kevinah95.kdriller.Configuration
+import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
     kotlin("jvm") version "1.9.0"
@@ -6,23 +6,8 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.25.3"
 }
 
-apply(from = "${rootDir}/scripts/publish-module.gradle.kts")
-
-mavenPublishing {
-    val artifactId = "kdriller"
-    coordinates(
-        Configuration.artifactGroup,
-        artifactId,
-        rootProject.extra.get("libVersion").toString()
-    )
-
-    pom {
-        name.set(artifactId)
-        description.set(
-            "Kotlin Framework to analyse Git repositories"
-        )
-    }
-}
+group = "io.github.kevinah95"
+version = "0.1.0" // x-release-please-version
 
 repositories {
     mavenCentral()
@@ -57,4 +42,51 @@ tasks.test {
 
 kotlin {
     jvmToolchain(11)
+}
+
+mavenPublishing {
+    // Configuring Maven Central
+    // See: https://vanniktech.github.io/gradle-maven-publish-plugin/central/#configuring-maven-central
+    publishToMavenCentral(SonatypeHost.S01, true)
+
+    signAllPublications()
+
+    // Configuring POM
+    // See: https://vanniktech.github.io/gradle-maven-publish-plugin/central/#configuring-the-pom
+    val artifactId = "kdriller"
+
+    coordinates(
+        group.toString(),
+        artifactId,
+        version.toString()
+    )
+
+    pom {
+        name.set(artifactId)
+        description.set(
+            "KDriller is a Kotlin framework that helps developers in analyzing Git repositories. " +
+            "With KDriller you can easily extract information about commits, developers, modified files, diffs, and source code."
+        )
+        url.set("https://github.com/kevinah95/KDriller/")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("kevinah95")
+                name.set("Kevin Hernández Rostrán")
+                url.set("https://github.com/kevinah95/")
+                email.set("kevinah95@gmail.com")
+            }
+        }
+        scm {
+            url.set("https://github.com/kevinah95/KDriller/")
+            connection.set("scm:git:git://github.com/kevinah95/KDriller.git")
+            developerConnection.set("scm:git:ssh://git@github.com/kevinah95/KDriller.git")
+        }
+    }
 }

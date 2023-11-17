@@ -11,8 +11,7 @@
   },
   "extra-files": [
     "README.md",
-    "buildSrc/src/main/kotlin/io/github/kevinah95/kdriller/Configuration.kt",
-    "gradle.properties"
+    "build.gradle.kts"
   ],
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
 }
