@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9](https://github.com/kevinah95/KDriller/compare/v0.1.8...v0.1.9) (2023-11-17)
+
+
+### Bug Fixes
+
+* **docs:** Replace general maven-central shield ([1f1c0c8](https://github.com/kevinah95/KDriller/commit/1f1c0c8327d2fbb2fb599149c2502a79fe9b1d4b))
+
+
+### Documentation
+
+* Add Nexus shield ([1f1c0c8](https://github.com/kevinah95/KDriller/commit/1f1c0c8327d2fbb2fb599149c2502a79fe9b1d4b))
+
 ## [0.1.8](https://github.com/kevinah95/KDriller/compare/v0.1.7...v0.1.8) (2023-11-17)
 
 
