@@ -8,7 +8,7 @@ on:
 
 jobs:
   publish:
-    if: ${{ contains(github.event.head_commit.message, 'SNAPSHOT') }}
+    if: ${{ contains(github.event.head_commit.message, '-SNAPSHOT') }}
     name: Snapshot build and publish
     runs-on: macos-latest
     steps:
