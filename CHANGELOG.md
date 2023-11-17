@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1](https://github.com/kevinah95/KDriller/compare/v0.1.4...v0.1.1) (2023-11-17)
+
+
+### Miscellaneous Chores
+
+* **main:** release 0.1.1 ([1a50979](https://github.com/kevinah95/KDriller/commit/1a50979b2441340d9f566729ffb7b9304d4c14da))
+* **main:** release 0.1.5 ([4523966](https://github.com/kevinah95/KDriller/commit/4523966689818a85f9e816d54c13b9802227d542))
+* **main:** release 0.1.5 ([300cb4f](https://github.com/kevinah95/KDriller/commit/300cb4fcb67478c71329a37f925fbb87bd163546))
+
 ## [0.1.4](https://github.com/kevinah95/KDriller/compare/v0.1.3...v0.1.4) (2023-11-17)
 
 
