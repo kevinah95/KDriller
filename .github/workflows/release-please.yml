@@ -19,11 +19,5 @@ jobs:
           command: manifest
       - run: echo "A release was created."
         if: ${{ steps.release.outputs.releases_created }}
-      # - uses: ./.github/workflows/publish.yml
-      #   if: ${{ steps.release.outputs.releases_created }}
-      - run: echo "Release ${{ steps.release.outputs['pr']['title'] }} created for package-a."
-      - run: echo ${{ toJSON(steps.release.outputs) }} >> outputs.json 
-      - run: echo ${{ toJSON(steps.release.outputs.pr) }} >> pr.json 
-      - run: echo "pr_number=$(jq -r '.title' pr.json)"
-      # - run: echo "Release ${{ toJSON(steps.release.outputs) }} created for package-a."
-      - run: echo "Release ${{ steps.release.outputs['version'] }} created for package-a."
+      - uses: ./.github/workflows/publish.yml
+        if: ${{ steps.release.outputs.releases_created }}
