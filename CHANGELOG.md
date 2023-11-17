@@ -5,13 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.10](https://github.com/kevinah95/KDriller/compare/v0.1.9...v0.1.10) (2023-11-17)
-
-
-### Documentation
-
-* Update CHANGELOG.md ([2ca55a6](https://github.com/kevinah95/KDriller/commit/2ca55a681e317b1a00fccb3e6c37b6530a60cdea))
-
 ## [Unreleased]
 
 ### Added
@@ -47,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TestRepository:
     - testIgnoreDeletedWhitespaces
     - testIgnoreAddWhitespacesAndChangedFile
+
+## [0.1.10](https://github.com/kevinah95/KDriller/compare/v0.1.9...v0.1.10) (2023-11-17)
+
+
+### Documentation
+
+* Update CHANGELOG.md ([2ca55a6](https://github.com/kevinah95/KDriller/commit/2ca55a681e317b1a00fccb3e6c37b6530a60cdea))
 
 ## [0.1.9](https://github.com/kevinah95/KDriller/compare/v0.1.8...v0.1.9) (2023-11-17)
 
