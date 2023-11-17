@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.11](https://github.com/kevinah95/KDriller/compare/v0.1.10...v0.1.11) (2023-11-17)
+
+
+### Documentation
+
+* Move Unreleased verion in CHANGELOG.md ([10b9fd8](https://github.com/kevinah95/KDriller/commit/10b9fd8487b3a7f72935060316fd4337be170097))
+
 ## [Unreleased]
 
 ### Added
