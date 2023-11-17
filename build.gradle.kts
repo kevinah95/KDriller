@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.github.kevinah95"
-version = "0.1.4" // x-release-please-version
+version = "0.1.5-SNAPSHOT" // x-release-please-version
 
 repositories {
     mavenCentral()
