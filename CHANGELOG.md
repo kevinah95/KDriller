@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Git:
+  - _open_repository():
+    - Implement _repo.config_writer().set_value("blame", "markUnblamableLines", "true").release()
+  - get_list_commits():
+    - kwargs full implementation
+  - get_commits_last_modified_lines
+  - _calculate_last_commits
+  - _get_blame
+  - _useless_line
+  - get_commits_modified_file:
+    - check includeDeletedFiles behaviour
+- Repository:
+  - _prepRepo():
+    - implement clear method
+  - traverseCommits():
+    - Build the arguments to pass to git rev-list
+
+### Changed
+
+- domain/ModifiedFile:
+  - Review histogram implementation.
+- Repository:
+  - traverseCommits():
+    - Make it parallel
+- utils/Config:
+  - Generic Exception to BadName exception
+  - build_args(self)
+- Test:
+  - TestRepository:
+    - testIgnoreDeletedWhitespaces
+    - testIgnoreAddWhitespacesAndChangedFile
+
 ## [0.1.7](https://github.com/kevinah95/KDriller/compare/v0.1.6...v0.1.7) (2023-11-17)
 
 
@@ -121,42 +157,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * **main:** release 0.1.0 ([75a6b09](https://github.com/kevinah95/KDriller/commit/75a6b095812b910b194acc4e8b9fff5de0c2ad3e))
 * **main:** release 0.1.0 ([3586637](https://github.com/kevinah95/KDriller/commit/35866379bae8debd63a8ec10c39ae02d6f7ecea1))
-
-## [Unreleased]
-
-### Added
-
-- Git:
-  - _open_repository():
-    - Implement _repo.config_writer().set_value("blame", "markUnblamableLines", "true").release()
-  - get_list_commits():
-    - kwargs full implementation
-  - get_commits_last_modified_lines
-  - _calculate_last_commits
-  - _get_blame
-  - _useless_line
-  - get_commits_modified_file:
-    - check includeDeletedFiles behaviour
-- Repository:
-  - _prepRepo():
-    - implement clear method
-  - traverseCommits():
-    - Build the arguments to pass to git rev-list
-
-### Changed
-
-- domain/ModifiedFile:
-  - Review histogram implementation.
-- Repository:
-  - traverseCommits():
-    - Make it parallel
-- utils/Config:
-  - Generic Exception to BadName exception
-  - build_args(self)
-- Test:
-  - TestRepository:
-    - testIgnoreDeletedWhitespaces
-    - testIgnoreAddWhitespacesAndChangedFile
 
 ## [0.6.0] - 2023-07-17
 
