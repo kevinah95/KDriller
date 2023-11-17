@@ -12,42 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Move Unreleased verion in CHANGELOG.md ([10b9fd8](https://github.com/kevinah95/KDriller/commit/10b9fd8487b3a7f72935060316fd4337be170097))
 
-## [Unreleased]
-
-### Added
-
-- Git:
-  - _open_repository():
-    - Implement _repo.config_writer().set_value("blame", "markUnblamableLines", "true").release()
-  - get_list_commits():
-    - kwargs full implementation
-  - get_commits_last_modified_lines
-  - _calculate_last_commits
-  - _get_blame
-  - _useless_line
-  - get_commits_modified_file:
-    - check includeDeletedFiles behaviour
-- Repository:
-  - _prepRepo():
-    - implement clear method
-  - traverseCommits():
-    - Build the arguments to pass to git rev-list
-
-### Changed
-
-- domain/ModifiedFile:
-  - Review histogram implementation.
-- Repository:
-  - traverseCommits():
-    - Make it parallel
-- utils/Config:
-  - Generic Exception to BadName exception
-  - build_args(self)
-- Test:
-  - TestRepository:
-    - testIgnoreDeletedWhitespaces
-    - testIgnoreAddWhitespacesAndChangedFile
-
 ## [0.1.10](https://github.com/kevinah95/KDriller/compare/v0.1.9...v0.1.10) (2023-11-17)
 
 
@@ -270,3 +234,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - test-repos.zip to test resources folder.
 - Documentation:
   - Doc strings to Git and Repository classes
+
+## [Unreleased]
+
+### Added
+
+- Git:
+  - _open_repository():
+    - Implement _repo.config_writer().set_value("blame", "markUnblamableLines", "true").release()
+  - get_list_commits():
+    - kwargs full implementation
+  - get_commits_last_modified_lines
+  - _calculate_last_commits
+  - _get_blame
+  - _useless_line
+  - get_commits_modified_file:
+    - check includeDeletedFiles behaviour
+- Repository:
+  - _prepRepo():
+    - implement clear method
+  - traverseCommits():
+    - Build the arguments to pass to git rev-list
+
+### Changed
+
+- domain/ModifiedFile:
+  - Review histogram implementation.
+- Repository:
+  - traverseCommits():
+    - Make it parallel
+- utils/Config:
+  - Generic Exception to BadName exception
+  - build_args(self)
+- Test:
+  - TestRepository:
+    - testIgnoreDeletedWhitespaces
+    - testIgnoreAddWhitespacesAndChangedFile
