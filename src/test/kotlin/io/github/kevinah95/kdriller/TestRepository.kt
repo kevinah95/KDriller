@@ -194,7 +194,8 @@ internal class TestRepository {
         // Act
         val commit = Repository(
             pathToRepo,
-            single = "93df8676e6fab70d9677e94fd0f6b17db095e890"
+            single = "93df8676e6fab70d9677e94fd0f6b17db095e890",
+            histogramDiff = false
         ).traverseCommits().first()
         val diff = commit.modifiedFiles[0].diffParsed
         val diffAdded = diff["added"].orEmpty()
