@@ -19,10 +19,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
 
     // For JGit
-    implementation("org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r")
-    implementation("org.eclipse.jgit:org.eclipse.jgit.archive:6.6.0.202305301015-r")
-    implementation("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:6.6.0.202305301015-r")
-    implementation("org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.5.0.202303070854-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:6.7.0.202309050840-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit.archive:6.7.0.202309050840-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:6.7.0.202309050840-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.7.0.202309050840-r")
     implementation("commons-io:commons-io:2.13.0")
 
     // Coroutines
