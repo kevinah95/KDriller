@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/kevinah95/KDriller/compare/v0.2.0...v0.2.1) (2023-11-23)
+
+
+### Dependencies
+
+* Update jgit 6.6 to 6.7 ([6f2069f](https://github.com/kevinah95/KDriller/commit/6f2069f6057ecf7f99387e2cffb74fd5a0d09e01))
+
 ## [0.2.0](https://github.com/kevinah95/KDriller/compare/v0.1.11...v0.2.0) (2023-11-17)
 
 
