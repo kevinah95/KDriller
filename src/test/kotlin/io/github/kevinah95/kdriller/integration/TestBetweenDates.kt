@@ -17,11 +17,9 @@
 
 package io.github.kevinah95.kdriller.integration
 
-import io.github.kevinah95.kdriller.Git
 import io.github.kevinah95.kdriller.Repository
 import org.apache.commons.io.FileUtils
 import java.io.File
-import java.time.ZonedDateTime
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals

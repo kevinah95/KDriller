@@ -161,8 +161,13 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
             revSort = RevSort.NONE
         }
 
+        val fromCommit = _conf.get("from_commit") as String?
+        val toCommit = _conf.get("to_commit") as String?
+
         val revId: ObjectId? = if (_conf.get("single") != null) {
             repo?.resolve(_conf.get("single") as String)?.toObjectId()
+        } else if(fromCommit != null) {
+            repo?.resolve(fromCommit)
         } else {
             repo?.exactRef(rev)?.objectId!!
         }
@@ -180,8 +185,14 @@ class Git @JvmOverloads constructor(path: String, var conf: Conf? = null) : Clos
                 walk.markStart(commit)
                 for (revCommit in walk) {
                     yield(getCommitFromJGit(revCommit))
+                    if(toCommit != null && revCommit.getId().getName().equals(toCommit)) {
+                        //Found to, stopping walk
+                        break;
+                    }
                 }
             }
+
+
     }
 
     /**

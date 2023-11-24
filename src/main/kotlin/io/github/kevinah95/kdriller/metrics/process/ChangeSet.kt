@@ -36,7 +36,7 @@ class ChangeSet(
     fun _initialize() {
         committedTogether = mutableListOf()
 
-        for (commit in repoMiner?.traverseCommits()!!) {
+        repoMiner?.traverseCommits()?.forEach { commit ->
             committedTogether!!.add(commit.modifiedFiles.size)
         }
     }

@@ -256,8 +256,8 @@ data class Conf(val options: Map<String, Any?>) {
      * Get the ending commit from the 'to', 'to_commit' or 'to_tag' filter.
      */
     fun getEndingCommit(): String? {
-        val toTag = get("to_tag") as String
-        var toCommit = get("to_commit") as String
+        val toTag = get("to_tag") as String?
+        var toCommit = get("to_commit") as String?
 
         if (toTag != null) {
             val taggedCommit = (get("git") as Git).getCommitFromTag(toTag)
@@ -282,8 +282,8 @@ data class Conf(val options: Map<String, Any?>) {
         val since = get("since")
         val sinceAsFilter = get("since_as_filter")
         val until = get("to")
-        //val from_commit = self.get_starting_commit()
-        //val to_commit = self.get_ending_commit()
+        val fromCommit = getStartingCommit()
+        val toCommit = getEndingCommit()
         val includeRefs = get("include_refs")
         val includeRemotes = get("include_remotes")
         val branch = get("only_in_branch")
@@ -294,6 +294,14 @@ data class Conf(val options: Map<String, Any?>) {
 
         if (single != null) {
             rev.add(MaxCountRevFilter.create(1))
+        } else if (fromCommit != null || toCommit != null){
+            if (fromCommit != null && toCommit != null) {
+
+            } else if (fromCommit != null){
+
+            } else {
+
+            }
         }
 
         // from
