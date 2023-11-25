@@ -4,6 +4,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.kevinah95/kdriller)](https://central.sonatype.com/artifact/io.github.kevinah95/kdriller)
 [![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/io.github.kevinah95/kdriller?server=https%3A%2F%2Fs01.oss.sonatype.org)](https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/kevinah95/kdriller)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.9.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkevinah95%2FKDriller.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkevinah95%2FKDriller?ref=badge_shield)
 
 KDriller is a Kotlin framework that helps developers in analyzing Git repositories. With KDriller you can easily extract information about **commits**, **developers**, **modified files**, **diffs**, and **source code**. 
 
@@ -40,3 +41,6 @@ cd kdriller
 - if none is suitable for testing your feature, create a new one. **Be careful**: if you create a new one, do not forget to upload a new zip file `test-repos.zip` that includes your new repository, otherwise the tests will fail.
 
 To run the tests use gradle.
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkevinah95%2FKDriller.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkevinah95%2FKDriller?ref=badge_large)
