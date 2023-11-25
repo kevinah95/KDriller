@@ -5,6 +5,8 @@
 [![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/io.github.kevinah95/kdriller?server=https%3A%2F%2Fs01.oss.sonatype.org)](https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/kevinah95/kdriller)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.9.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
 
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkevinah95%2FKDriller.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkevinah95%2FKDriller?ref=badge_small)
+
 KDriller is a Kotlin framework that helps developers in analyzing Git repositories. With KDriller you can easily extract information about **commits**, **developers**, **modified files**, **diffs**, and **source code**. 
 
 ## About this repository
@@ -24,6 +26,20 @@ for(commit in Repository(pathToRepo).traverseCommits()){
         println(commit.msg)
         println(commit.author.name)
     }
+```
+
+## Installation
+
+### with Gradle
+
+```kotlin
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("com.github.kevinah95:kdriller:[version]")
+}
 ```
 
 ## How to contribute
